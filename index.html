@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ОТ РУКИ — школа рисования</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Inter:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:  #ECEEE5;
+      --ink: #1C1C1A;
+      --dim: #7A7A6E;
+      --pad: clamp(24px, 6vw, 96px);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-family: 'Unbounded', sans-serif;
+      font-weight: 700;
+      font-size: clamp(28px, 4.5vw, 56px);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100svh;
+      padding: 36px var(--pad) 40px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 32px;
+    }
+
+    .hero-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo-img {
+      max-width: min(520px, 65vw);
+      height: auto;
+      display: block;
+      margin-top: 8px;
+    }
+
+    .hero-nav {
+      display: flex;
+      gap: 24px;
+      padding-top: 16px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .hero-nav a { text-decoration: none; color: var(--dim); transition: color 0.2s; }
+    .hero-nav a:hover { color: var(--ink); }
+
+    .hero-mid { display: flex; align-items: flex-end; }
+
+    .hero-tagline {
+      font-weight: 300;
+      font-size: clamp(18px, 2.6vw, 30px);
+      line-height: 1.5;
+      max-width: 720px;
+      color: var(--dim);
+    }
+    .hero-tagline strong { color: var(--ink); font-weight: 400; }
+
+    .hero-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 13px;
+      color: var(--dim);
+      letter-spacing: 0.03em;
+    }
+
+    /* ─── TRACKS ─── */
+    .tracks-section { padding: 100px var(--pad); }
+
+    .tracks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 48px;
+    }
+
+    .track { background: var(--bg); padding: 56px 48px; }
+
+    .track-tag {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border: 1px solid rgba(0,0,0,0.18);
+      border-radius: 100px;
+      padding: 6px 14px;
+      margin-bottom: 32px;
+      color: var(--dim);
+    }
+
+    .track h3 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(22px, 2.8vw, 32px);
+      font-weight: 700;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+    }
+
+    .track-teacher { font-size: 14px; color: var(--dim); font-style: italic; margin-bottom: 24px; }
+
+    .track-desc { font-size: 15px; color: var(--dim); line-height: 1.75; margin-bottom: 32px; }
+
+    .track-price {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(30px, 3.5vw, 44px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .track-price-sub { font-size: 13px; color: var(--dim); margin-bottom: 4px; }
+
+    .track-program {
+      list-style: none;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      margin-top: 28px;
+      padding-top: 24px;
+    }
+
+    .track-program li {
+      display: flex;
+      gap: 14px;
+      font-size: 14px;
+      color: var(--dim);
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      align-items: baseline;
+    }
+
+    .track-program li::before {
+      content: attr(data-n);
+      font-family: 'Unbounded', sans-serif;
+      font-size: 9px;
+      font-weight: 700;
+      color: rgba(0,0,0,0.2);
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    /* ─── TEACHERS ─── */
+    .teachers { padding: 100px var(--pad); background: var(--ink); color: var(--bg); }
+
+    .teachers .eyebrow { color: rgba(255,255,255,0.28); }
+    .teachers h2 { color: var(--bg); margin-bottom: 64px; }
+
+    .teachers-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+    }
+
+    .teacher-photo {
+      aspect-ratio: 3 / 4;
+      overflow: hidden;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      background: #2a2a28;
+    }
+
+    .teacher-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+      transition: transform 0.5s ease;
+    }
+    .teacher-photo:hover img { transform: scale(1.03); }
+
+    .teacher-role {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 10px;
+    }
+
+    .teacher-card h3 {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(16px, 1.8vw, 20px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      line-height: 1.2;
+      color: var(--bg);
+    }
+
+    .teacher-card p {
+      font-size: 14px;
+      color: rgba(255,255,255,0.45);
+      line-height: 1.75;
+    }
+
+    /* ─── SCHEDULE ─── */
+    .schedule { background: var(--bg); padding: 100px var(--pad); }
+
+    .schedule h2 { margin-bottom: 60px; }
+
+    .sched-list { list-style: none; }
+
+    .sched-item {
+      display: grid;
+      grid-template-columns: 56px 1fr auto;
+      gap: 32px;
+      align-items: center;
+      padding: 26px 0;
+      border-bottom: 1px solid rgba(0,0,0,0.07);
+    }
+    .sched-item:first-child { border-top: 1px solid rgba(0,0,0,0.07); }
+
+    .sched-day {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--dim);
+      opacity: 0.6;
+    }
+
+    .sched-name { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+
+    .sched-teacher { font-size: 13px; color: var(--dim); font-style: italic; }
+
+    .sched-price {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .sched-price span {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      font-family: 'Inter', sans-serif;
+      color: var(--dim);
+      margin-top: 3px;
+    }
+
+    .sched-item.soon { opacity: 0.35; }
+
+    /* ─── HOW ─── */
+    .how { padding: 100px var(--pad); background: var(--ink); color: var(--bg); }
+
+    .how .eyebrow { color: rgba(255,255,255,0.28); }
+    .how h2 { color: var(--bg); margin-bottom: 72px; }
+
+    .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px; }
+
+    .step-n {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 40px;
+      font-weight: 900;
+      color: rgba(255,255,255,0.07);
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .step-title { font-size: 17px; font-weight: 500; margin-bottom: 12px; }
+
+    .step-desc { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.45); }
+
+    /* ─── PHOTOS ─── */
+    .photos { padding: 100px var(--pad); }
+
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: 300px 260px;
+      gap: 12px;
+      margin-top: 48px;
+    }
+
+    .ph { overflow: hidden; border-radius: 6px; background: #d0d0c8; }
+
+    .ph img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      transition: transform 0.55s ease;
+    }
+    .ph:hover img { transform: scale(1.04); }
+
+    .ph-1 { grid-column: 1 / 5;  grid-row: 1 / 3; }
+    .ph-2 { grid-column: 5 / 9;  grid-row: 1 / 2; }
+    .ph-3 { grid-column: 9 / 13; grid-row: 1 / 2; }
+    .ph-4 { grid-column: 5 / 9;  grid-row: 2 / 3; }
+    .ph-5 { grid-column: 9 / 11; grid-row: 2 / 3; }
+    .ph-6 { grid-column: 11 / 13; grid-row: 2 / 3; }
+
+    .photo-note {
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--dim);
+      letter-spacing: 0.02em;
+      text-align: right;
+    }
+
+    /* ─── INCLUDES ─── */
+    .includes-section { padding: 100px var(--pad); }
+
+    .includes-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      background: rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 48px;
+    }
+
+    .inc-card { background: var(--bg); padding: 44px 40px; }
+    .inc-icon { font-size: 28px; margin-bottom: 20px; }
+    .inc-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; }
+    .inc-desc { font-size: 14px; color: var(--dim); line-height: 1.7; }
+
+    /* ─── CTA ─── */
+    .cta {
+      background: var(--ink);
+      color: var(--bg);
+      padding: 120px var(--pad);
+      text-align: center;
+    }
+
+    .cta h2 { color: var(--bg); margin-bottom: 16px; }
+
+    .cta-sub {
+      font-size: clamp(14px, 1.5vw, 17px);
+      color: rgba(255,255,255,0.38);
+      font-weight: 300;
+      margin-bottom: 56px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg);
+      color: var(--ink);
+      text-decoration: none;
+      padding: 20px 44px;
+      border-radius: 100px;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .btn:hover { background: #fff; transform: translateY(-2px); }
+    .btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      padding: 32px var(--pad);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--dim);
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 960px) {
+      .tracks-grid, .includes-grid { grid-template-columns: 1fr; }
+      .teachers-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
+      .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
+      .sched-item { grid-template-columns: 48px 1fr; }
+      .sched-price { display: none; }
+      .photo-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+      }
+      .ph-1 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 2 / 3; }
+      .ph-2 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 2 / 3; }
+      .ph-3 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 4 / 3; }
+      .ph-4 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 4 / 3; }
+      .ph-5 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 4 / 3; }
+      .ph-6 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 4 / 3; }
+      .photo-note { text-align: left; }
+    }
+
+    @media (max-width: 600px) {
+      .hero-nav { display: none; }
+      .teachers-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .photo-grid { grid-template-columns: 1fr; }
+      .ph-1, .ph-2, .ph-3, .ph-4, .ph-5, .ph-6 { grid-column: 1 / 2; aspect-ratio: 4 / 3; }
+      .track { padding: 40px 28px; }
+      .inc-card { padding: 36px 28px; }
+      .sched-item { grid-template-columns: 44px 1fr; gap: 16px; }
+      .logo-img { max-width: 75vw; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <header class="hero-head">
+    <img src="logo.png" alt="ОТ РУКИ" class="logo-img">
+    <nav class="hero-nav">
+      <a href="#tracks">Программы</a>
+      <a href="#teachers">Преподаватели</a>
+      <a href="#schedule">Расписание</a>
+      <a href="#signup">Записаться</a>
+    </nav>
+  </header>
+
+  <div class="hero-mid">
+    <p class="hero-tagline">
+      <strong>Школа графики</strong> — образование с нуля и повышение мастерства.<br>
+      Рисуем, ходим на выставки и в музеи, общаемся с художниками.<br>
+      Теория и практика, история искусств — и настоящее комьюнити.
+    </p>
+  </div>
+
+  <div class="hero-foot">
+    <span>Москва · Набираем группу · 19:00 · до 12 человек</span>
+    <span>↓&ensp;листай</span>
+  </div>
+</section>
+
+
+<!-- ── TWO TRACKS ── -->
+<section class="tracks-section" id="tracks">
+  <p class="eyebrow">Наши программы</p>
+  <h2>Для начинающих<br>и просто любопытных</h2>
+
+  <div class="tracks-grid">
+
+    <div class="track">
+      <span class="track-tag">Расслабленно</span>
+      <h3>Свободное<br>рисование</h3>
+      <p class="track-teacher">Женя Бородина</p>
+      <p class="track-desc">
+        Рисуем без программы и давления — каждый вечер своя тема, живая атмосфера мастерской.
+        Знакомимся с разными техниками, пробуем что-то новое. Опыт приобретаем на практике,
+        нужно только желание.
+      </p>
+      <div class="track-price">5 000 ₽</div>
+      <p class="track-price-sub">за занятие · по записи</p>
+      <p class="track-price-sub" style="margin-top:8px">Вторник · Четверг · 19:00</p>
+    </div>
+
+    <div class="track">
+      <span class="track-tag">Системно</span>
+      <h3>Основы<br>рисования</h3>
+      <p class="track-teacher">Полина Ярцева</p>
+      <p class="track-desc">
+        Курс из 4 занятий — последовательная программа для тех, кто хочет разобраться
+        в устройстве рисунка. Работаем с формой, тоном и пропорциями под наблюдением художника.
+        Взрослые и абитуриенты от 16 лет.
+      </p>
+      <div class="track-price">20 000 ₽</div>
+      <p class="track-price-sub">курс из 4 занятий · старт 25 марта</p>
+      <p class="track-price-sub">или 6 000 ₽ за одно занятие</p>
+      <p class="track-price-sub" style="margin-top:8px">Понедельник · Среда · 19:00</p>
+      <ul class="track-program">
+        <li data-n="1">Простые фигуры · Перспектива</li>
+        <li data-n="2">Тон важнее цвета</li>
+        <li data-n="3">Пропорции человека</li>
+        <li data-n="4">Портрет с нуля</li>
+      </ul>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── TEACHERS ── -->
+<section class="teachers" id="teachers">
+  <p class="eyebrow">Преподаватели</p>
+  <h2>Кто ведёт</h2>
+
+  <div class="teachers-grid">
+
+    <div class="teacher-card">
+      <div class="teacher-photo">
+        <img src="misha.jpeg" alt="Михаил Ганнушкин">
+      </div>
+      <span class="teacher-role">Куратор · Основатель</span>
+      <h3>Михаил Ганнушкин</h3>
+      <p>Художник. Создал «От руки» как место, где взрослые рисуют в живой атмосфере настоящей мастерской. Все занятия проходят у него дома.</p>
+    </div>
+
+    <div class="teacher-card">
+      <div class="teacher-photo">
+        <img src="polina.jpeg" alt="Полина Ярцева">
+      </div>
+      <span class="teacher-role">Основы рисования · Пн/Ср</span>
+      <h3>Полина Ярцева</h3>
+      <p>Окончила МГХПУ им. Строганова. С 2012 года ведёт уроки рисунка и масляной живописи по авторской методологии — для взрослых и абитуриентов мировых худвузов. Работы в частных коллекциях, выставки в России и за рубежом.</p>
+    </div>
+
+    <div class="teacher-card">
+      <div class="teacher-photo">
+        <img src="evgenia.jpg" alt="Женя Бородина">
+      </div>
+      <span class="teacher-role">Свободное рисование · Вт/Чт</span>
+      <h3>Женя Бородина</h3>
+      <p>Окончила МГХПА им. Строганова и школу «Свободные мастерские» при МОММА. В 2025 году — резидентура в Зальцбургской летней академии искусств под кураторством Ирины Наховой. Живопись, рисунок, печатные техники.</p>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ── SCHEDULE ── -->
+<section class="schedule" id="schedule">
+  <p class="eyebrow">Расписание</p>
+  <h2>Каждую неделю</h2>
+
+  <ul class="sched-list">
+    <li class="sched-item">
+      <div class="sched-day">ПН</div>
+      <div class="sched-info">
+        <div class="sched-name">Основы рисования</div>
+        <div class="sched-teacher">Полина Ярцева</div>
+      </div>
+      <div class="sched-price">6 000 ₽ <span>или 20 000 ₽ курс ×4</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day">ВТ</div>
+      <div class="sched-info">
+        <div class="sched-name">Свободное рисование</div>
+        <div class="sched-teacher">Женя Бородина</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day">СР</div>
+      <div class="sched-info">
+        <div class="sched-name">Основы рисования</div>
+        <div class="sched-teacher">Полина Ярцева · другая группа</div>
+      </div>
+      <div class="sched-price">6 000 ₽ <span>или 20 000 ₽ курс ×4</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day">ЧТ</div>
+      <div class="sched-info">
+        <div class="sched-name">Свободное рисование</div>
+        <div class="sched-teacher">Женя Бородина</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item soon">
+      <div class="sched-day">ВС</div>
+      <div class="sched-info">
+        <div class="sched-name">Наброски с натуры</div>
+        <div class="sched-teacher">Скоро · утром или днём</div>
+      </div>
+      <div class="sched-price">— <span>в разработке</span></div>
+    </li>
+  </ul>
+</section>
+
+
+<!-- ── HOW IT WORKS ── -->
+<section class="how" id="how">
+  <p class="eyebrow">Как проходит занятие</p>
+  <h2>Школа рисования</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">01</div>
+      <div class="step-title">Собираемся</div>
+      <div class="step-desc">Встречаемся в мастерской. Чай, кофе, конфеты. Немного говорим — о том, что будем делать сегодня и почему это работает.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">02</div>
+      <div class="step-title">Рисуем</div>
+      <div class="step-desc">Знакомимся с техниками вместе, под наблюдением художника. Опыт приобретаем на практике — нужно только желание, остальное появится.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">03</div>
+      <div class="step-title">Смотрим</div>
+      <div class="step-desc">Раскладываем все работы и смотрим вместе. Это не критика — разговор о том, что хотелось сказать и что получилось.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">04</div>
+      <div class="step-title">После</div>
+      <div class="step-desc">Бар Rondepipa — в двух минутах ходьбы. Для всех участников скидка 15%. Хорошее место, чтобы продолжить разговор.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── PHOTOS ── -->
+<section class="photos" id="photos">
+  <p class="eyebrow">Как это выглядит</p>
+  <div class="photo-grid">
+    <div class="ph ph-1">
+      <img src="1772657877547.jpeg" alt="Художник объясняет">
+    </div>
+    <div class="ph ph-2">
+      <img src="1772657882919.jpeg" alt="Рисуем вместе">
+    </div>
+    <div class="ph ph-3">
+      <img src="1772657885435.jpeg" alt="Смотрим результаты">
+    </div>
+    <div class="ph ph-4">
+      <img src="bar1.jpeg" alt="Rondepipa">
+    </div>
+    <div class="ph ph-5">
+      <img src="bar2.jpeg" alt="Бар рядом">
+    </div>
+    <div class="ph ph-6">
+      <img src="bar3.jpeg" alt="После занятия">
+    </div>
+  </div>
+  <p class="photo-note">Бар Rondepipa — в двух минутах ✦</p>
+</section>
+
+
+<!-- ── INCLUDES ── -->
+<section class="includes-section" id="includes">
+  <p class="eyebrow">Что входит</p>
+  <h2>Всё что нужно</h2>
+
+  <div class="includes-grid">
+    <div class="inc-card">
+      <div class="inc-icon">🎨</div>
+      <div class="inc-title">Все материалы</div>
+      <div class="inc-desc">Бумага, карандаши, пастель — всё на месте. С собой ничего приносить не нужно.</div>
+    </div>
+    <div class="inc-card">
+      <div class="inc-icon">☕</div>
+      <div class="inc-title">Чай, кофе, конфеты</div>
+      <div class="inc-desc">Мастерская — это гости. Пока собираемся и в перерыве — угощаем.</div>
+    </div>
+    <div class="inc-card">
+      <div class="inc-icon">🍸</div>
+      <div class="inc-title">Скидка в баре</div>
+      <div class="inc-desc">После занятия — 15% скидка в Rondepipa на Сретенке для всех участников.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── CTA ── -->
+<section class="cta" id="signup">
+  <h2>Хочу рисовать</h2>
+  <p class="cta-sub">Набираем группу — напишите нам в Telegram</p>
+  <a href="https://t.me/otrookibot" class="btn">
+    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+    </svg>
+    Записаться
+  </a>
+</section>
+
+
+<!-- ── FOOTER ── -->
+<footer>
+  <span>© 2026 ОТ РУКИ</span>
+  <span>Москва · Большой Сергиевский переулок, 11</span>
+  <span>@otrookibot</span>
+</footer>
+
+</body>
+</html>
