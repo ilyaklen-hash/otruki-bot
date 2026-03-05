@@ -4,7 +4,7 @@
 ==============================================
 
 Установка:
-    pip install python-telegram-bot
+    pip install "python-telegram-bot[socks]" gspread google-auth
 
 Запуск:
     python bot.py
@@ -13,16 +13,28 @@
     1. Встречает нового пользователя
     2. Показывает ближайшие занятия
     3. Принимает запись: имя → контакт
-    4. Отправляет подтверждение клиенту
+    4. Отправляет подтверждение клиенту + реквизиты оплаты
     5. Уведомляет администратора о новой записи
+    6. Записывает бронирование в Google Sheets
 """
 
 import logging
+import os
+import json
+from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, ConversationHandler, filters, ContextTypes,
 )
+
+# Google Sheets (опционально — работает если настроен GOOGLE_CREDENTIALS)
+try:
+    import gspread
+    from google.oauth2.service_account import Credentials
+    GSPREAD_AVAILABLE = True
+except ImportError:
+    GSPREAD_AVAILABLE = False
 
 # ═══════════════════════════════════════════════════════════
 #  НАСТРОЙКИ — заполнить перед запуском
@@ -32,32 +44,77 @@ BOT_TOKEN = "8771338517:AAEs0mfa_cPoWKySsFXLkWQb3DNKjO8c4Z0"
 
 ADMIN_ID = 163103731  # @klenklen
 
+# ── Реквизиты оплаты ──────────────────────────────────────────────────────────
+PAYMENT_PHONE  = "+7 926 115 3033"
+PAYMENT_NAME   = "Михаил Г."
+PAYMENT_BANK   = "Т-Банк"
+
+# ── Google Sheets (необязательно) ─────────────────────────────────────────────
+# Переменная окружения GOOGLE_CREDENTIALS — JSON-ключ сервисного аккаунта.
+# Переменная GOOGLE_SHEET_ID — ID таблицы (из URL: .../spreadsheets/d/<ID>/...).
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
+
 # ═══════════════════════════════════════════════════════════
 #  РАСПИСАНИЕ ЗАНЯТИЙ
 #  Обновляйте этот список перед каждым набором
 # ═══════════════════════════════════════════════════════════
 
 SESSIONS = [
+    # ── Свободное рисование (Женя Бородина) · 5 000 ₽ · Вт/Чт ──────────────
     {
-        "id":    "s1",
-        "date":  "15 марта, суббота",
-        "time":  "19:00",
-        "theme": "Натюрморт",
-        "spots": 5,
+        "id":      "s1",
+        "date":    "17 марта, вторник",
+        "time":    "19:00",
+        "type":    "Свободное рисование",
+        "teacher": "Женя Бородина",
+        "price":   "5 000 ₽",
+        "spots":   10,
     },
     {
-        "id":    "s2",
-        "date":  "22 марта, суббота",
-        "time":  "19:00",
-        "theme": "Портрет",
-        "spots": 6,
+        "id":      "s2",
+        "date":    "19 марта, четверг",
+        "time":    "19:00",
+        "type":    "Свободное рисование",
+        "teacher": "Женя Бородина",
+        "price":   "5 000 ₽",
+        "spots":   10,
     },
     {
-        "id":    "s3",
-        "date":  "29 марта, суббота",
-        "time":  "19:00",
-        "theme": "Абстракция",
-        "spots": 4,
+        "id":      "s3",
+        "date":    "24 марта, вторник",
+        "time":    "19:00",
+        "type":    "Свободное рисование",
+        "teacher": "Женя Бородина",
+        "price":   "5 000 ₽",
+        "spots":   10,
+    },
+    {
+        "id":      "s4",
+        "date":    "26 марта, четверг",
+        "time":    "19:00",
+        "type":    "Свободное рисование",
+        "teacher": "Женя Бородина",
+        "price":   "5 000 ₽",
+        "spots":   10,
+    },
+    # ── Основы с нуля (Полина Ярцева) · 6 000 ₽ / 20 000 ₽ курс · Пн/Ср ───
+    {
+        "id":      "s5",
+        "date":    "24 марта, понедельник",
+        "time":    "19:00",
+        "type":    "Основы с нуля",
+        "teacher": "Полина Ярцева",
+        "price":   "6 000 ₽ (или 20 000 ₽ за курс ×4)",
+        "spots":   10,
+    },
+    {
+        "id":      "s6",
+        "date":    "25 марта, среда",
+        "time":    "19:00",
+        "type":    "Основы с нуля",
+        "teacher": "Полина Ярцева",
+        "price":   "6 000 ₽ (или 20 000 ₽ за курс ×4)",
+        "spots":   10,
     },
 ]
 
@@ -71,6 +128,29 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
+
+# ── Google Sheets helper ───────────────────────────────────────────────────────
+def _append_to_sheet(row: list) -> None:
+    """Добавляет строку в Google Sheets. Тихо падает, если не настроено."""
+    if not GSPREAD_AVAILABLE or not GOOGLE_SHEET_ID:
+        return
+    creds_json = os.getenv("GOOGLE_CREDENTIALS")
+    if not creds_json:
+        return
+    try:
+        creds_data = json.loads(creds_json)
+        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
+        creds = Credentials.from_service_account_info(creds_data, scopes=scopes)
+        gc = gspread.authorize(creds)
+        sh = gc.open_by_key(GOOGLE_SHEET_ID)
+        ws = sh.sheet1
+        # Создать заголовки если таблица пустая
+        if ws.row_count == 0 or not ws.row_values(1):
+            ws.append_row(["Дата записи", "Имя", "Контакт", "Telegram", "Занятие", "Преподаватель", "Дата занятия", "Цена"])
+        ws.append_row(row)
+    except Exception as e:
+        log.warning("Не удалось записать в Google Sheets: %s", e)
+
 # Состояния диалога
 CHOOSE_SESSION, GET_NAME, GET_PHONE = range(3)
 
@@ -81,10 +161,12 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         InlineKeyboardButton("📅 Посмотреть занятия", callback_data="show_sessions"),
     ]]
     await update.message.reply_text(
-        "Привет! Это *ОТ РУКИ* — вечера рисования для взрослых 🎨\n\n"
-        "Мы собираемся небольшой группой дома у художника, "
-        "2,5 часа рисуем вместе. Все материалы включены.\n\n"
-        "Стоимость: *3 500 ₽* за занятие",
+        "Привет! Это *ОТ РУКИ* — школа рисования для взрослых 🎨\n\n"
+        "Занятия в мастерской художника Миши. 2,5 часа, группа 8–12 человек, "
+        "все материалы включены. Старт *17 марта*.\n\n"
+        "Два направления:\n"
+        "• *Свободное рисование* (Женя Бородина) — Вт/Чт · *5 000 ₽*\n"
+        "• *Основы с нуля* (Полина Ярцева) — Пн/Ср · *6 000 ₽* разово или *20 000 ₽* курс ×4",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
@@ -108,7 +190,7 @@ async def show_sessions(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = []
     for s in available:
         spots_txt = f"{s['spots']} {_spots_word(s['spots'])}"
-        label = f"{s['date']} · {s['theme']} · {spots_txt}"
+        label = f"{s['date']} · {s['type']} · {spots_txt}"
         keyboard.append([InlineKeyboardButton(label, callback_data=f"ses:{s['id']}")])
 
     await query.edit_message_text(
@@ -135,7 +217,8 @@ async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await query.edit_message_text(
         f"Отлично! Вы выбрали:\n\n"
         f"📅 *{session['date']}* в {session['time']}\n"
-        f"🎨 Тема: *{session['theme']}*\n\n"
+        f"🎨 *{session['type']}* · {session['teacher']}\n"
+        f"💳 {session['price']}\n\n"
         f"Как вас зовут?",
         parse_mode="Markdown",
     )
@@ -175,7 +258,10 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         f"✅ Готово! Вы записаны.\n\n"
         f"📅 *{session.get('date')}* в {session.get('time')}\n"
-        f"🎨 Тема: {session.get('theme')}\n\n"
+        f"🎨 {session.get('type')} · {session.get('teacher')}\n"
+        f"💳 {session.get('price')}\n\n"
+        f"💸 *Оплата* — переведите на {PAYMENT_BANK} по номеру "
+        f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
         f"Накануне пришлём адрес и все детали. "
         f"Если что-то изменится — напишите сюда, мы поймём 🙂\n\n"
         f"До встречи ✦",
@@ -190,12 +276,25 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         f"📞 {contact}\n"
         f"🔗 {tg_ref}\n\n"
         f"📅 {session.get('date')} · {session.get('time')}\n"
-        f"🎨 {session.get('theme')}"
+        f"🎨 {session.get('type')} · {session.get('teacher')}\n"
+        f"💳 {session.get('price')}"
     )
     try:
         await ctx.bot.send_message(chat_id=ADMIN_ID, text=admin_msg, parse_mode="Markdown")
     except Exception as e:
         log.warning("Не удалось отправить уведомление администратору: %s", e)
+
+    # Запись в Google Sheets
+    _append_to_sheet([
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        name,
+        contact,
+        tg_ref,
+        session.get("type", ""),
+        session.get("teacher", ""),
+        f"{session.get('date')} {session.get('time')}",
+        session.get("price", ""),
+    ])
 
     return ConversationHandler.END
 
