@@ -1,3 +1,20 @@
+
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        name,
+        phone,
+        tg_ref,
+        booking.get("name", ""),
+        booking.get("teacher", ""),
+        booking.get("date", ""),
+        booking.get("price", ""),
+    ])
+
+    return ConversationHandler.END
+
+
+# ── /cancel ─────────────────────────────────────────────────
+async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    await update.message.reply_text("Окей! Если надумаешь — просто напиши /start 🙂")
 #!/usr/bin/env python3
 """
 ОТ РУКИ — Telegram-бот для записи на занятия
@@ -98,7 +115,11 @@ def _append_to_sheet(row: list) -> None:
         log.warning("Google Sheets: GOOGLE_CREDENTIALS не задан")
         return
     try:
-        creds_data = json.loads(creds_json)
+        try:
+            creds_data = json.loads(creds_json)
+        except json.JSONDecodeError:
+            # Railway иногда хранит реальные \n вместо \\n в private_key
+            creds_data = json.loads(creds_json.replace('\n', '\\n'))
         scopes = [
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive",
@@ -315,6 +336,74 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 # ── /cancel ─────────────────────────────────────────────────
 async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text("Окей! Если надумаешь — просто напиши /start 🙂")
+    return ConversationHandler.END
+
+
+# ── Вопросы вне флоу → пересылаем администратору ────────────
+async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
+    text = update.message.text or "(не текст)"
+
+    await update.message.reply_text(
+        "Получили! Ответим в ближайшее время 🙂\n\n"
+        "Если хочешь записаться — нажми /start"
+    )
+    try:
+        await ctx.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"💬 *Вопрос от {tg_ref}*\n\n{text}",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        log.warning("Пересылка вопроса: %s", e)
+
+
+# ── Хелпер склонения ────────────────────────────────────────
+def _spots_word(n: int) -> str:
+    if n % 10 == 1 and n % 100 != 11:
+        return "место"
+    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
+        return "места"
+    return "мест"
+
+
+# ═══════════════════════════════════════════════════════════
+#  ЗАПУСК
+# ═══════════════════════════════════════════════════════════
+
+def main() -> None:
+    app = Application.builder().token(BOT_TOKEN).build()
+
+    conv = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            CHOOSE_PRODUCT: [
+                CallbackQueryHandler(choose_product, pattern=r"^product:"),
+            ],
+            CHOOSE_SESSION: [
+                CallbackQueryHandler(session_chosen, pattern=r"^(ses:|confirm_course)"),
+            ],
+            GET_NAME: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
+            ],
+            GET_PHONE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", cancel)],
+    )
+
+    app.add_handler(conv)
+    # Всё остальное (вопросы) — пересылаем администратору
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_question))
+
+    log.info("Бот ОТ РУКИ запущен ✦")
+    app.run_polling(drop_pending_updates=True)
+
+
+if __name__ == "__main__":
+    main()
     return ConversationHandler.END
 
 
