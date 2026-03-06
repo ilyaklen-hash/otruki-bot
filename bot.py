@@ -9,13 +9,9 @@
 Запуск:
     python bot.py
 
-Что делает бот:
-    1. Предлагает два продукта: курс или свободное рисование
-    2. Записывает на выбранное занятие — нужно только имя
-    3. Автоматически захватывает Telegram username для CRM
-    4. Отправляет адрес и реквизиты оплаты
-    5. Уведомляет администратора
-    6. Записывает в Google Sheets (если настроено)
+Флоу:
+    /start → выбор продукта → (дата) → имя → телефон → подтверждение
+    Вопросы вне флоу → пересылаются администратору
 """
 
 import logging
@@ -28,10 +24,8 @@ from telegram.ext import (
     MessageHandler, ConversationHandler, filters, ContextTypes,
 )
 
-# Google Sheets (опционально)
 try:
     import gspread
-    from google.oauth2.service_account import Credentials
     GSPREAD_AVAILABLE = True
 except ImportError:
     GSPREAD_AVAILABLE = False
@@ -43,39 +37,34 @@ except ImportError:
 BOT_TOKEN = "8771338517:AAEs0mfa_cPoWKySsFXLkWQb3DNKjO8c4Z0"
 ADMIN_ID  = 163103731  # @klenklen
 
-# ── Адрес ─────────────────────────────────────────────────────────────────────
 ADDRESS = (
     "📍 Большой Сергиевский переулок, 11\n"
     "Домофон: 9300, код вызова 12\n"
     "5 этаж, кв. 12"
 )
 
-# ── Реквизиты оплаты ──────────────────────────────────────────────────────────
 PAYMENT_PHONE = "+7 926 115 3033"
 PAYMENT_NAME  = "Михаил Г."
 PAYMENT_BANK  = "Т-Банк"
 
-# ── Google Sheets ──────────────────────────────────────────────────────────────
+# ID таблицы из URL: .../spreadsheets/d/<ID>/edit
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
 # ═══════════════════════════════════════════════════════════
-#  ПРОДУКТЫ
-#  Обновляйте перед каждым набором
+#  ПРОДУКТЫ  ← обновляйте перед каждым набором
 # ═══════════════════════════════════════════════════════════
 
-# Курс «Основы рисования» — 4 занятия, 20 000 ₽
+# Курс — только понедельники, 4 занятия
 COURSE = {
     "id":      "course",
     "name":    "Курс «Основы рисования»",
     "teacher": "Полина Ярцева",
-    "schedule":"Пн/Ср · 19:00 · старт 25 марта",
-    "lessons": "4 занятия",
+    "schedule": "Понедельник · 19:00 · старт 25 марта · 4 занятия",
     "price":   "20 000 ₽",
     "spots":   10,
 }
 
-# Свободное рисование — разовые занятия, 5 000 ₽
-# Обновляйте список: записывайте только предстоящую неделю
+# Свободное рисование — только предстоящая неделя
 FREE_SESSIONS = [
     {"id": "s1", "date": "17 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
     {"id": "s2", "date": "19 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
@@ -93,31 +82,43 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# Состояния диалога
-CHOOSE_PRODUCT, CHOOSE_SESSION, GET_NAME = range(3)
+CHOOSE_PRODUCT, CHOOSE_SESSION, GET_NAME, GET_PHONE = range(4)
 
 
-# ── Google Sheets helper ───────────────────────────────────
+# ── Google Sheets ───────────────────────────────────────────
 def _append_to_sheet(row: list) -> None:
-    if not GSPREAD_AVAILABLE or not GOOGLE_SHEET_ID:
+    if not GSPREAD_AVAILABLE:
+        log.warning("Google Sheets: gspread не установлен")
+        return
+    if not GOOGLE_SHEET_ID:
+        log.warning("Google Sheets: GOOGLE_SHEET_ID не задан")
         return
     creds_json = os.getenv("GOOGLE_CREDENTIALS")
     if not creds_json:
+        log.warning("Google Sheets: GOOGLE_CREDENTIALS не задан")
         return
     try:
         creds_data = json.loads(creds_json)
-        scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-        creds  = Credentials.from_service_account_info(creds_data, scopes=scopes)
-        gc     = gspread.authorize(creds)
-        ws     = gc.open_by_key(GOOGLE_SHEET_ID).sheet1
-        if not ws.row_values(1):
-            ws.append_row(["Дата записи", "Имя", "Telegram", "Занятие", "Преподаватель", "Дата занятия", "Цена"])
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+        # service_account_from_dict — правильный способ в gspread 6.x
+        gc = gspread.service_account_from_dict(creds_data, scopes=scopes)
+        ws = gc.open_by_key(GOOGLE_SHEET_ID).sheet1
+        # Заголовки — только если лист пустой
+        if not ws.get_all_values():
+            ws.append_row([
+                "Дата записи", "Имя", "Телефон", "Telegram",
+                "Занятие", "Преподаватель", "Дата занятия", "Цена"
+            ])
         ws.append_row(row)
+        log.info("Google Sheets: запись добавлена")
     except Exception as e:
-        log.warning("Google Sheets: %s", e)
+        log.error("Google Sheets: %s", e)
 
 
-# ── /start ─────────────────────────────────────────────────
+# ── /start ──────────────────────────────────────────────────
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [
         [InlineKeyboardButton("🎨 Свободное рисование  · 5 000 ₽", callback_data="product:free")],
@@ -125,7 +126,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     ]
     await update.message.reply_text(
         "Привет! Это *ОТ РУКИ* — школа графики в Москве 🎨\n\n"
-        "Рисуем в мастерской художника Миши, небольшими группами. "
+        "Рисуем в мастерской Миши Ганнушкина, небольшими группами. "
         "Все материалы включены, нужно только желание.\n\n"
         "Есть два формата — выбирай что ближе:",
         parse_mode="Markdown",
@@ -134,15 +135,13 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return CHOOSE_PRODUCT
 
 
-# ── Выбор продукта ─────────────────────────────────────────
+# ── Выбор продукта ──────────────────────────────────────────
 async def choose_product(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-
     product = query.data.split(":", 1)[1]
 
     if product == "course":
-        # Показываем курс — одна кнопка «Записаться»
         if COURSE["spots"] <= 0:
             await query.edit_message_text(
                 "На курс все места уже заняты 😔\n\n"
@@ -158,13 +157,12 @@ async def choose_product(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             "price":   COURSE["price"],
             "id":      COURSE["id"],
         }
-
         keyboard = [[InlineKeyboardButton("Записаться →", callback_data="confirm_course")]]
         await query.edit_message_text(
             f"*{COURSE['name']}*\n"
             f"Преподаватель: {COURSE['teacher']}\n"
-            f"Формат: {COURSE['lessons']} · {COURSE['schedule']}\n"
-            f"Стоимость: *{COURSE['price']}* за курс\n\n"
+            f"{COURSE['schedule']}\n"
+            f"Стоимость: *{COURSE['price']}*\n\n"
             "Программа:\n"
             "1. Простые фигуры · Перспектива\n"
             "2. Тон важнее цвета\n"
@@ -173,10 +171,9 @@ async def choose_product(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup(keyboard),
         )
-        return CHOOSE_SESSION  # ждём подтверждения кнопкой
+        return CHOOSE_SESSION
 
     else:
-        # Свободное рисование — показываем даты
         available = [s for s in FREE_SESSIONS if s["spots"] > 0]
         if not available:
             await query.edit_message_text(
@@ -201,15 +198,13 @@ async def choose_product(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         return CHOOSE_SESSION
 
 
-# ── Выбор даты (свободное рисование) или подтверждение курса ──
+# ── Выбор даты / подтверждение курса ────────────────────────
 async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-
     data = query.data
 
     if data == "confirm_course":
-        # Курс уже в user_data — просто спрашиваем имя
         booking = ctx.user_data.get("booking", {})
         await query.edit_message_text(
             f"Отлично, записываем на *{booking.get('name')}*!\n\n"
@@ -218,7 +213,6 @@ async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         )
         return GET_NAME
 
-    # Свободное рисование — выбрали конкретную дату
     session_id = data.split(":", 1)[1]
     session    = next((s for s in FREE_SESSIONS if s["id"] == session_id), None)
 
@@ -234,7 +228,6 @@ async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         "price":   session["price"],
         "id":      session["id"],
     }
-
     await query.edit_message_text(
         f"*{session['date']}* в {session['time']}\n"
         "Свободное рисование · Женя Бородина\n\n"
@@ -244,16 +237,27 @@ async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return GET_NAME
 
 
-# ── Имя → финал ────────────────────────────────────────────
+# ── Имя ─────────────────────────────────────────────────────
 async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text.strip()
     if len(name) < 2:
         await update.message.reply_text("Напиши своё имя:")
         return GET_NAME
 
+    ctx.user_data["name"] = name
+    await update.message.reply_text(
+        f"Приятно, {name}! Оставь номер телефона — пришлём напоминание накануне:"
+    )
+    return GET_PHONE
+
+
+# ── Телефон → финал ─────────────────────────────────────────
+async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    phone   = update.message.text.strip()
+    name    = ctx.user_data.get("name", "—")
     booking = ctx.user_data.get("booking", {})
     user    = update.effective_user
-    tg_ref  = f"@{user.username}" if user.username else f"tg://user?id={user.id}"
+    tg_ref  = f"@{user.username}" if user.username else f"id{user.id}"
 
     # Уменьшить места
     if booking.get("type") == "free":
@@ -266,15 +270,14 @@ async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
     # Подтверждение пользователю
     await update.message.reply_text(
-        f"Отлично, {name}! Ты записан(а) 🙌\n\n"
+        f"Ты записан(а) 🙌\n\n"
         f"📌 *{booking.get('name')}*\n"
         f"🗓 {booking.get('date')}\n"
         f"💳 {booking.get('price')}\n\n"
         f"💸 *Оплата:* переведи на {PAYMENT_BANK} по номеру "
         f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
         f"{ADDRESS}\n\n"
-        "Если что-то поменяется — напиши сюда, разберёмся 🙂\n"
-        "Есть вопросы — тоже пиши, ответим.\n\n"
+        "Если что-то поменяется или есть вопросы — напиши сюда, ответим 🙂\n\n"
         "До встречи ✦",
         parse_mode="Markdown",
     )
@@ -283,6 +286,7 @@ async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     admin_msg = (
         f"🆕 *Новая запись!*\n\n"
         f"👤 {name}\n"
+        f"📞 {phone}\n"
         f"🔗 {tg_ref}\n\n"
         f"📌 {booking.get('name')}\n"
         f"🗓 {booking.get('date')}\n"
@@ -297,6 +301,7 @@ async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     _append_to_sheet([
         datetime.now().strftime("%Y-%m-%d %H:%M"),
         name,
+        phone,
         tg_ref,
         booking.get("name", ""),
         booking.get("teacher", ""),
@@ -309,10 +314,28 @@ async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ── /cancel ─────────────────────────────────────────────────
 async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text(
-        "Окей! Если надумаешь — просто напиши /start 🙂"
-    )
+    await update.message.reply_text("Окей! Если надумаешь — просто напиши /start 🙂")
     return ConversationHandler.END
+
+
+# ── Вопросы вне флоу → пересылаем администратору ────────────
+async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
+    text = update.message.text or "(не текст)"
+
+    await update.message.reply_text(
+        "Получили! Ответим в ближайшее время 🙂\n\n"
+        "Если хочешь записаться — нажми /start"
+    )
+    try:
+        await ctx.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"💬 *Вопрос от {tg_ref}*\n\n{text}",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        log.warning("Пересылка вопроса: %s", e)
 
 
 # ── Хелпер склонения ────────────────────────────────────────
@@ -343,11 +366,17 @@ def main() -> None:
             GET_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
             ],
+            GET_PHONE: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone),
+            ],
         },
         fallbacks=[CommandHandler("cancel", cancel)],
     )
 
     app.add_handler(conv)
+    # Всё остальное (вопросы) — пересылаем администратору
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_question))
+
     log.info("Бот ОТ РУКИ запущен ✦")
     app.run_polling(drop_pending_updates=True)
 
