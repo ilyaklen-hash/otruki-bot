@@ -3,14 +3,9 @@
 ОТ РУКИ — Telegram-бот для записи на занятия
 ==============================================
 
-Установка:
-    pip install "python-telegram-bot[socks]" gspread google-auth
-
-Запуск:
-    python bot.py
-
 Флоу:
-    /start → выбор продукта → (дата) → имя → телефон → подтверждение
+    /start → выбор преподавателя → дата → имя → телефон → подтверждение
+    Кнопка «Курс скоро» → имя → телефон → лист ожидания
     Вопросы вне флоу → пересылаются администратору
 """
 
@@ -47,29 +42,37 @@ PAYMENT_PHONE = "+7 926 115 3033"
 PAYMENT_NAME  = "Михаил Г."
 PAYMENT_BANK  = "Т-Банк"
 
-# ID таблицы из URL: .../spreadsheets/d/<ID>/edit
 GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
 # ═══════════════════════════════════════════════════════════
-#  ПРОДУКТЫ  ← обновляйте перед каждым набором
+#  ЗАНЯТИЯ  ← обновляйте перед каждым новым месяцем
 # ═══════════════════════════════════════════════════════════
 
-# Курс — только понедельники, 4 занятия
-COURSE = {
-    "id":      "course",
-    "name":    "Курс «Основы рисования»",
-    "teacher": "Полина Ярцева",
-    "schedule": "Понедельник · 19:00 · старт 25 марта · 4 занятия",
-    "price":   "20 000 ₽",
-    "spots":   10,
-}
+SESSIONS = [
+    # ── Женя Бородина — вторник / четверг ──────────────────
+    {"id": "e1", "tag": "zhenya", "teacher": "Женя Бородина",
+     "format": "Свободное рисование",
+     "date": "17 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    {"id": "e2", "tag": "zhenya", "teacher": "Женя Бородина",
+     "format": "Свободное рисование",
+     "date": "19 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    {"id": "e3", "tag": "zhenya", "teacher": "Женя Бородина",
+     "format": "Свободное рисование",
+     "date": "24 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    {"id": "e4", "tag": "zhenya", "teacher": "Женя Бородина",
+     "format": "Свободное рисование",
+     "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    {"id": "e5", "tag": "zhenya", "teacher": "Женя Бородина",
+     "format": "Свободное рисование",
+     "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
 
-# Свободное рисование — только предстоящая неделя
-FREE_SESSIONS = [
-    {"id": "s1", "date": "17 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
-    {"id": "s2", "date": "19 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
-    {"id": "s3", "date": "24 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
-    {"id": "s4", "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    # ── Полина Ярцева — среда ───────────────────────────────
+    {"id": "p1", "tag": "polina", "teacher": "Полина Ярцева",
+     "format": "Основы рисования",
+     "date": "18 марта, среда",    "time": "19:00", "price": "5 000 ₽", "spots": 10},
+    {"id": "p2", "tag": "polina", "teacher": "Полина Ярцева",
+     "format": "Основы рисования",
+     "date": "25 марта, среда",    "time": "19:00", "price": "5 000 ₽", "spots": 10},
 ]
 
 # ═══════════════════════════════════════════════════════════
@@ -82,7 +85,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-CHOOSE_PRODUCT, CHOOSE_SESSION, GET_NAME, GET_PHONE = range(4)
+CHOOSE_TEACHER, CHOOSE_SESSION, GET_NAME, GET_PHONE = range(4)
 
 
 # ── Google Sheets ───────────────────────────────────────────
@@ -107,14 +110,12 @@ def _append_to_sheet(row: list) -> None:
             "https://www.googleapis.com/auth/spreadsheets",
             "https://www.googleapis.com/auth/drive",
         ]
-        # service_account_from_dict — правильный способ в gspread 6.x
         gc = gspread.service_account_from_dict(creds_data, scopes=scopes)
         ws = gc.open_by_key(GOOGLE_SHEET_ID).sheet1
-        # Заголовки — только если лист пустой
         if not ws.get_all_values():
             ws.append_row([
                 "Дата записи", "Имя", "Телефон", "Telegram",
-                "Занятие", "Преподаватель", "Дата занятия", "Цена"
+                "Формат", "Преподаватель", "Дата занятия", "Цена"
             ])
         ws.append_row(row)
         log.info("Google Sheets: запись добавлена")
@@ -125,116 +126,104 @@ def _append_to_sheet(row: list) -> None:
 # ── /start ──────────────────────────────────────────────────
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [
-        [InlineKeyboardButton("🎨 Свободное рисование  · 5 000 ₽", callback_data="product:free")],
-        [InlineKeyboardButton("📚 Курс «Основы рисования»  · 20 000 ₽", callback_data="product:course")],
+        [InlineKeyboardButton("🎨 Женя Бородина — Свободное рисование · 5 000 ₽",
+                              callback_data="teacher:zhenya")],
+        [InlineKeyboardButton("✏️ Полина Ярцева — Основы рисования · 5 000 ₽",
+                              callback_data="teacher:polina")],
+        [InlineKeyboardButton("📚 Записаться на курс с Полиной (скоро — уведомить меня)",
+                              callback_data="teacher:waitlist")],
     ]
     await update.message.reply_text(
-        "Привет! Это *ОТ РУКИ* — школа графики в Москве 🎨\n\n"
-        "Рисуем в мастерской Миши Ганнушкина, небольшими группами. "
-        "Все материалы включены, нужно только желание.\n\n"
-        "Есть два формата — выбирай что ближе:",
+        "Привет! Это *ОТ РУКИ* — школа рисования в Москве 🎨\n\n"
+        "Сейчас проводим разовые вечерние занятия — небольшие группы, "
+        "живая атмосфера мастерской. Все материалы включены.\n\n"
+        "Выбери формат:",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup(keyboard),
     )
-    return CHOOSE_PRODUCT
+    return CHOOSE_TEACHER
 
 
-# ── Выбор продукта ──────────────────────────────────────────
-async def choose_product(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+# ── Выбор преподавателя ──────────────────────────────────────
+async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    product = query.data.split(":", 1)[1]
+    tag = query.data.split(":", 1)[1]
 
-    if product == "course":
-        if COURSE["spots"] <= 0:
-            await query.edit_message_text(
-                "На курс все места уже заняты 😔\n\n"
-                "Напишите нам — добавим в лист ожидания: @otrookibot"
-            )
-            return ConversationHandler.END
-
+    # ── Лист ожидания курса ──────────────────────────────────
+    if tag == "waitlist":
         ctx.user_data["booking"] = {
-            "type":    "course",
-            "name":    COURSE["name"],
-            "teacher": COURSE["teacher"],
-            "date":    COURSE["schedule"],
-            "price":   COURSE["price"],
-            "id":      COURSE["id"],
+            "type":    "waitlist",
+            "name":    "Курс с Полиной Ярцевой",
+            "teacher": "Полина Ярцева",
+            "date":    "—",
+            "price":   "20 000 ₽",
+            "id":      "waitlist",
         }
-        keyboard = [[InlineKeyboardButton("Записаться →", callback_data="confirm_course")]]
         await query.edit_message_text(
-            f"*{COURSE['name']}*\n"
-            f"Преподаватель: {COURSE['teacher']}\n"
-            f"{COURSE['schedule']}\n"
-            f"Стоимость: *{COURSE['price']}*\n\n"
-            "Программа:\n"
-            "1. Простые фигуры · Перспектива\n"
-            "2. Тон важнее цвета\n"
-            "3. Пропорции человека\n"
-            "4. Портрет с нуля",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
-        return CHOOSE_SESSION
-
-    else:
-        available = [s for s in FREE_SESSIONS if s["spots"] > 0]
-        if not available:
-            await query.edit_message_text(
-                "Сейчас свободных мест нет 😔\n\n"
-                "Напишите нам — появятся новые даты: @otrookibot"
-            )
-            return ConversationHandler.END
-
-        keyboard = []
-        for s in available:
-            spots_txt = f"{s['spots']} {_spots_word(s['spots'])}"
-            label = f"{s['date']} · {s['time']} · {spots_txt}"
-            keyboard.append([InlineKeyboardButton(label, callback_data=f"ses:{s['id']}")])
-
-        await query.edit_message_text(
-            "*Свободное рисование* с Женей Бородиной\n"
-            "5 000 ₽ за вечер · все материалы включены\n\n"
-            "Выбирай дату:",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-        )
-        return CHOOSE_SESSION
-
-
-# ── Выбор даты / подтверждение курса ────────────────────────
-async def session_chosen(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    data = query.data
-
-    if data == "confirm_course":
-        booking = ctx.user_data.get("booking", {})
-        await query.edit_message_text(
-            f"Отлично, записываем на *{booking.get('name')}*!\n\n"
+            "Отлично! Как только откроем запись на курс — напишем тебе первыми 🙌\n\n"
+            "*Курс «Основы рисования»* с Полиной Ярцевой — 4 занятия, 20 000 ₽.\n\n"
             "Как тебя зовут?",
             parse_mode="Markdown",
         )
         return GET_NAME
 
-    session_id = data.split(":", 1)[1]
-    session    = next((s for s in FREE_SESSIONS if s["id"] == session_id), None)
+    # ── Выбор даты для конкретного преподавателя ────────────
+    available = [s for s in SESSIONS if s["tag"] == tag and s["spots"] > 0]
+
+    if not available:
+        teacher_name = "Женя Бородина" if tag == "zhenya" else "Полина Ярцева"
+        await query.edit_message_text(
+            f"У {teacher_name} сейчас нет свободных мест 😔\n\n"
+            "Напишите нам — появятся новые даты: @otrookibot"
+        )
+        return ConversationHandler.END
+
+    sample = available[0]
+    teacher_name = sample["teacher"]
+    format_name  = sample["format"]
+
+    keyboard = []
+    for s in available:
+        spots_txt = f"{s['spots']} {_spots_word(s['spots'])}"
+        label = f"{s['date']} · {s['time']} · {spots_txt}"
+        keyboard.append([InlineKeyboardButton(label, callback_data=f"ses:{s['id']}")])
+
+    await query.edit_message_text(
+        f"*{format_name}* с {teacher_name}\n"
+        f"5 000 ₽ за вечер · все материалы включены\n\n"
+        "Выбери дату:",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+    )
+    return CHOOSE_SESSION
+
+
+# ── Выбор даты ───────────────────────────────────────────────
+async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    session_id = query.data.split(":", 1)[1]
+    session = next((s for s in SESSIONS if s["id"] == session_id), None)
 
     if not session or session["spots"] <= 0:
-        await query.edit_message_text("Это место уже занято. Попробуй /start — покажу другие даты.")
+        await query.edit_message_text(
+            "Это место уже занято 😔 Попробуй /start — покажу другие даты."
+        )
         return ConversationHandler.END
 
     ctx.user_data["booking"] = {
-        "type":    "free",
-        "name":    "Свободное рисование",
-        "teacher": "Женя Бородина",
+        "type":    "session",
+        "name":    session["format"],
+        "teacher": session["teacher"],
         "date":    f"{session['date']} · {session['time']}",
         "price":   session["price"],
         "id":      session["id"],
     }
     await query.edit_message_text(
         f"*{session['date']}* в {session['time']}\n"
-        "Свободное рисование · Женя Бородина\n\n"
+        f"{session['format']} · {session['teacher']}\n\n"
         "Как тебя зовут?",
         parse_mode="Markdown",
     )
@@ -249,9 +238,16 @@ async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         return GET_NAME
 
     ctx.user_data["name"] = name
-    await update.message.reply_text(
-        f"Приятно, {name}! Оставь номер телефона — пришлём напоминание накануне:"
-    )
+    booking = ctx.user_data.get("booking", {})
+
+    if booking.get("type") == "waitlist":
+        await update.message.reply_text(
+            f"Приятно, {name}! Оставь номер телефона — напишем когда откроем запись:"
+        )
+    else:
+        await update.message.reply_text(
+            f"Приятно, {name}! Оставь номер телефона — пришлём напоминание накануне:"
+        )
     return GET_PHONE
 
 
@@ -263,45 +259,58 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     user    = update.effective_user
     tg_ref  = f"@{user.username}" if user.username else f"id{user.id}"
 
-    # Уменьшить места
-    if booking.get("type") == "free":
-        for s in FREE_SESSIONS:
+    if booking.get("type") == "waitlist":
+        # ── Лист ожидания ────────────────────────────────────
+        await update.message.reply_text(
+            f"Записали! 🙌\n\n"
+            f"Как только откроем запись на *Курс с Полиной Ярцевой* — "
+            f"напишем тебе первым(ой).\n\n"
+            "Если есть вопросы — просто напиши сюда 🙂",
+            parse_mode="Markdown",
+        )
+        admin_msg = (
+            f"📋 *Лист ожидания — Курс с Полиной*\n\n"
+            f"👤 {name}\n"
+            f"📞 {phone}\n"
+            f"🔗 {tg_ref}"
+        )
+    else:
+        # ── Уменшить места──────────────────────────────────
+        for s in SESSIONS:
             if s["id"] == booking.get("id"):
                 s["spots"] = max(0, s["spots"] - 1)
                 break
-    else:
-        COURSE["spots"] = max(0, COURSE["spots"] - 1)
 
-    # Подтверждение пользователю
-    await update.message.reply_text(
-        f"Ты записан(а) 🙌\n\n"
-        f"📌 *{booking.get('name')}*\n"
-        f"🗓 {booking.get('date')}\n"
-        f"💳 {booking.get('price')}\n\n"
-        f"💸 *Оплата:* переведи на {PAYMENT_BANK} по номеру "
-        f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
-        f"{ADDRESS}\n\n"
-        "Если что-то поменяется или есть вопросы — напиши сюда, ответим 🙂\n\n"
-        "До встречи ✦",
-        parse_mode="Markdown",
-    )
+        # ── Подтверждение пользователю ────────────────────────
+        await update.message.reply_text(
+            f"Ты записан(а) 🙌\n\n"
+            f"📌 *{booking.get('name')}* · {booking.get('teacher')}\n"
+            f"🗓 {booking.get('date')}\n"
+            f"💳 {booking.get('price')}\n\n"
+            f"💸 *Оплата:* переведи на {PAYMENT_BANK} по номеру "
+            f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
+            f"{ADDRESS}\n\n"
+            "Если что-то поменяется — напиши сюда, ответим 🙂\n\n"
+            "До встречи ✦",
+            parse_mode="Markdown",
+        )
+        admin_msg = (
+            f"🆕 *Новая запись!*\n\n"
+            f"👤 {name}\n"
+            f"📞 {phone}\n"
+            f"🔗 {tg_ref}\n\n"
+            f"📌 {booking.get('name')} · {booking.get('teacher')}\n"
+            f"🗓 {booking.get('date')}\n"
+            f"💳 {booking.get('price')}"
+        )
 
-    # Уведомление администратору
-    admin_msg = (
-        f"🆕 *Новая запись!*\n\n"
-        f"👤 {name}\n"
-        f"📞 {phone}\n"
-        f"🔗 {tg_ref}\n\n"
-        f"📌 {booking.get('name')}\n"
-        f"🗓 {booking.get('date')}\n"
-        f"💳 {booking.get('price')}"
-    )
+    # ── Уведомление администратору ────────────────────────────
     try:
         await ctx.bot.send_message(chat_id=ADMIN_ID, text=admin_msg, parse_mode="Markdown")
     except Exception as e:
         log.warning("Уведомление администратору: %s", e)
 
-    # Google Sheets
+    # ── Google Sheets ─────────────────────────────────────────
     _append_to_sheet([
         datetime.now().strftime("%Y-%m-%d %H:%M"),
         name,
@@ -322,7 +331,7 @@ async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     return ConversationHandler.END
 
 
-# ── Вопросы вне флоу → пересылаем администратору ────────────
+# ── Вопросы вне флоу ────────────────────────────────────────
 async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.effective_user
     tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
@@ -342,7 +351,7 @@ async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> No
         log.warning("Пересылка вопроса: %s", e)
 
 
-# ── Хелпер склонения ────────────────────────────────────────
+# ── Склонение ────────────────────────────────────────────────
 def _spots_word(n: int) -> str:
     if n % 10 == 1 and n % 100 != 11:
         return "место"
@@ -361,11 +370,11 @@ def main() -> None:
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CHOOSE_PRODUCT: [
-                CallbackQueryHandler(choose_product, pattern=r"^product:"),
+            CHOOSE_TEACHER: [
+                CallbackQueryHandler(choose_teacher, pattern=r"^teacher:"),
             ],
             CHOOSE_SESSION: [
-                CallbackQueryHandler(session_chosen, pattern=r"^(ses:|confirm_course)"),
+                CallbackQueryHandler(choose_session, pattern=r"^ses:"),
             ],
             GET_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
@@ -378,7 +387,6 @@ def main() -> None:
     )
 
     app.add_handler(conv)
-    # Всё остальное (вопросы) — пересылаем администратору
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, forward_question))
 
     log.info("Бот ОТ РУКИ запущен ✦")
