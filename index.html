@@ -50,8 +50,9 @@
       min-height: 100svh;
       padding: 36px var(--pad) 40px;
       display: grid;
-      grid-template-rows: auto 1fr auto;
-      gap: 32px;
+      grid-template-rows: auto auto 1fr;
+      gap: 0;
+      background: var(--bg);
     }
 
     .hero-head {
@@ -60,6 +61,7 @@
       align-items: flex-start;
       flex-wrap: wrap;
       gap: 16px;
+      margin-bottom: 36px;
     }
 
     .logo-img {
@@ -81,7 +83,10 @@
     .hero-nav a { text-decoration: none; color: var(--dim); transition: color 0.2s; }
     .hero-nav a:hover { color: var(--ink); }
 
-    .hero-mid { display: flex; align-items: flex-end; }
+    /* tagline выше — сразу под лого */
+    .hero-tagline-wrap {
+      padding-bottom: 40px;
+    }
 
     .hero-tagline {
       font-weight: 300;
@@ -92,13 +97,20 @@
     }
     .hero-tagline strong { color: var(--ink); font-weight: 400; }
 
-    .hero-foot {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      font-size: 13px;
-      color: var(--dim);
-      letter-spacing: 0.03em;
+    /* полоса на всю ширину экрана */
+    .hero-photo {
+      width: calc(100% + 2 * var(--pad));
+      margin-left: calc(-1 * var(--pad));
+      overflow: hidden;
+      height: clamp(200px, 28vh, 340px);
+    }
+
+    .hero-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 38%;
+      display: block;
     }
 
     /* ─── TRACKS ─── */
@@ -329,16 +341,7 @@
     .ph-2 { grid-column: 5 / 9;  grid-row: 1 / 2; }
     .ph-3 { grid-column: 9 / 13; grid-row: 1 / 2; }
     .ph-4 { grid-column: 5 / 9;  grid-row: 2 / 3; }
-    .ph-5 { grid-column: 9 / 11; grid-row: 2 / 3; }
-    .ph-6 { grid-column: 11 / 13; grid-row: 2 / 3; }
-
-    .photo-note {
-      margin-top: 20px;
-      font-size: 13px;
-      color: var(--dim);
-      letter-spacing: 0.02em;
-      text-align: right;
-    }
+    .ph-5 { grid-column: 9 / 13; grid-row: 2 / 3; }
 
     /* ─── INCLUDES ─── */
     .includes-section { padding: 100px var(--pad); }
@@ -357,6 +360,27 @@
     .inc-icon { font-size: 28px; margin-bottom: 20px; }
     .inc-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; }
     .inc-desc { font-size: 14px; color: var(--dim); line-height: 1.7; }
+
+    /* ─── INLINE BTN (в карточках) ─── */
+    .btn-inline {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--ink);
+      color: var(--bg);
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      margin-top: 36px;
+    }
+    .btn-inline:hover { opacity: 0.8; transform: translateY(-1px); }
+
+    /* CTA после расписания */
+    .sched-cta { padding: 56px var(--pad) 100px; display: flex; justify-content: center; }
 
     /* ─── CTA ─── */
     .cta {
@@ -420,17 +444,16 @@
       .ph-2 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 2 / 3; }
       .ph-3 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 4 / 3; }
       .ph-4 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 4 / 3; }
-      .ph-5 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 4 / 3; }
-      .ph-6 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 4 / 3; }
-      .photo-note { text-align: left; }
+      .ph-5 { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 16 / 9; }
     }
 
     @media (max-width: 600px) {
       .hero-nav { display: none; }
+      .hero-photo { height: clamp(140px, 22vh, 220px); }
       .teachers-grid { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; }
       .photo-grid { grid-template-columns: 1fr; }
-      .ph-1, .ph-2, .ph-3, .ph-4, .ph-5, .ph-6 { grid-column: 1 / 2; aspect-ratio: 4 / 3; }
+      .ph-1, .ph-2, .ph-3, .ph-4, .ph-5 { grid-column: 1 / 2; aspect-ratio: 4 / 3; }
       .track { padding: 40px 28px; }
       .inc-card { padding: 36px 28px; }
       .sched-item { grid-template-columns: 44px 1fr; gap: 16px; }
@@ -452,17 +475,16 @@
     </nav>
   </header>
 
-  <div class="hero-mid">
+  <div class="hero-tagline-wrap">
     <p class="hero-tagline">
       <strong>Школа графики</strong> — образование с нуля и повышение мастерства.<br>
-      Рисуем, ходим на выставки и в музеи, общаемся с художниками.<br>
-      Теория и практика, история искусств — и настоящее комьюнити.
+      Рисуем, ходим на выставки и в музеи, общаемсь с художниками.<br>
+      Teoriya i praktika, istorya i sovremennost' — i nastoyashchee soobsshestvo.
     </p>
   </div>
 
-  <div class="hero-foot">
-    <span>Москва · Набираем группу · 19:00 · до 12 человек</span>
-    <span>↓&ensp;листай</span>
+  <div class="hero-photo">
+    <img src="hero.jpg" alt="Мастерская ОТ РУКИ">
   </div>
 </section>
 
@@ -475,38 +497,41 @@
   <div class="tracks-grid">
 
     <div class="track">
-      <span class="track-tag">Расслабленно</span>
-      <h3>Свободное<br>рисование</h3>
-      <p class="track-teacher">Женя Бородина</p>
+      <span class="track-tag">Свободное рисование</span>
+      <h3>Женя<br>Бородина</h3>
+      <p class="track-teacher">Разовое занятие</p>
       <p class="track-desc">
         Рисуем без программы и давления — каждый вечер своя тема, живая атмосфера мастерской.
-        Знакомимся с разными техниками, пробуем что-то новое. Опыт приобретаем на практике,
+        Знакомимсясь с разными техниками, пробуем что-то новое. Опыт приобретаем на практике,
         нужно только желание.
       </p>
       <div class="track-price">5 000 ₽</div>
       <p class="track-price-sub">за занятие · по записи</p>
-      <p class="track-price-sub" style="margin-top:8px">Вторник · Четверг · 19:00</p>
+      <p class="track-price-sub" style="margin-top:8px">Вт 17, Чт 19, Вт 24, Чт 26, Вт 31 марта · 19:00</p>
+      <a href="https://t.me/otrookibot" class="btn-inline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        Записаться
+      </a>
     </div>
 
     <div class="track">
-      <span class="track-tag">Системно</span>
-      <h3>Основы<br>рисования</h3>
-      <p class="track-teacher">Полина Ярцева</p>
+      <span class="track-tag">Основы рисования</span>
+      <h3>Полина<br>Ярцева</h3>
+      <p class="track-teacher">Разовое занятие</p>
       <p class="track-desc">
-        Курс из 4 занятий — последовательная программа для тех, кто хочет разобраться
-        в устройстве рисунка. Работаем с формой, тоном и пропорциями под наблюдением художника.
-        Взрослые и абитуриенты от 16 лет.
+        Последовательная программа для тех, кто хочет разобратьсь в устройстве рисунка.
+        Работаем с формой, тоном и пропорциями. Взрослые и абитуриенты от 16 лет.
       </p>
-      <div class="track-price">20 000 ₽</div>
-      <p class="track-price-sub">курс из 4 занятий · старт 25 марта</p>
-      <p class="track-price-sub">или 6 000 ₽ за одно занятие</p>
-      <p class="track-price-sub" style="margin-top:8px">Понедельник · Среда · 19:00</p>
+      <div class="track-price">5 000 ₽</div>
+      <p class="track-price-sub">за занятие · по записи</p>
+      <p class="track-price-sub" style="margin-top:8px">Ср 18 и Ср 25 марта · 19:00</p>
       <ul class="track-program">
-        <li data-n="1">Простые фигуры · Перспектива</li>
-        <li data-n="2">Тон важнее цвета</li>
-        <li data-n="3">Пропорции человека</li>
-        <li data-n="4">Портрет с нуля</li>
+        <li data-n="→">Курс из 4 занятий с Полиной — открываем запись скоро</li>
       </ul>
+      <a href="https://t.me/otrookibot" class="btn-inline">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        Записаться
+      </a>
     </div>
 
   </div>
@@ -554,52 +579,84 @@
 <!-- ── SCHEDULE ── -->
 <section class="schedule" id="schedule">
   <p class="eyebrow">Расписание</p>
-  <h2>Каждую неделю</h2>
+  <h2>Март 2026</h2>
 
   <ul class="sched-list">
     <li class="sched-item">
-      <div class="sched-day">ПН</div>
-      <div class="sched-info">
-        <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева</div>
-      </div>
-      <div class="sched-price">6 000 ₽ <span>или 20 000 ₽ курс ×4</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day">ВТ</div>
+      <div class="sched-day" style="font-size:13px;line-height:1.2">17<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
       <div class="sched-info">
         <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бородина</div>
+        <div class="sched-teacher">Женя Бородина · вторник · 19:00</div>
       </div>
       <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
     </li>
     <li class="sched-item">
-      <div class="sched-day">СР</div>
+      <div class="sched-day" style="font-size:13px;line-height:1.2">18<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
       <div class="sched-info">
         <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · другая группа</div>
+        <div class="sched-teacher">Полина Ярцева · среда · 19:00</div>
       </div>
-      <div class="sched-price">6 000 ₽ <span>или 20 000 ₽ курс ×4</span></div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
     </li>
     <li class="sched-item">
-      <div class="sched-day">ЧТ</div>
+      <div class="sched-day" style="font-size:13px;line-height:1.2">19<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
       <div class="sched-info">
         <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бородина</div>
+        <div class="sched-teacher">Женя Бородина · четверг · 19:00</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day" style="font-size:13px;line-height:1.2">24<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
+      <div class="sched-info">
+        <div class="sched-name">Свободное рисование</div>
+        <div class="sched-teacher">Женя Бородина · вторник · 19:00</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day" style="font-size:13px;line-height:1.2">25<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
+      <div class="sched-info">
+        <div class="sched-name">Основы рисования</div>
+        <div class="sched-teacher">Полина Ярцева · среда · 19:00</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day" style="font-size:13px;line-height:1.2">26<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
+      <div class="sched-info">
+        <div class="sched-name">Свободное рисование</div>
+        <div class="sched-teacher">Женя Бородина · четверг · 19:00</div>
+      </div>
+      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
+    </li>
+    <li class="sched-item">
+      <div class="sched-day" style="font-size:13px;line-height:1.2">31<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
+      <div class="sched-info">
+        <div class="sched-name">Свободное рисование</div>
+        <div class="sched-teacher">Женя Бородина · вторник · 19:00</div>
       </div>
       <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
     </li>
     <li class="sched-item soon">
-      <div class="sched-day">ВС</div>
+      <div class="sched-day" style="font-size:11px;line-height:1.2">апр<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">2026</span></div>
       <div class="sched-info">
-        <div class="sched-name">Наброски с натуры</div>
-        <div class="sched-teacher">Скоро · утром или днём</div>
+        <div class="sched-name">Курс «Основы рисования»</div>
+        <div class="sched-teacher">Полина Ярцева · 4 занятия · запись скоро</div>
       </div>
-      <div class="sched-price">— <span>в разработке</span></div>
+      <div class="sched-price">20 000 ₽ <span>курс × 4</span></div>
     </li>
   </ul>
 </section>
 
+
+<!-- кнопка после расписания -->
+<div class="sched-cta">
+  <a href="https://t.me/otrookibot" class="btn" style="background:var(--ink);color:var(--bg);">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+    Записаться в Telegram
+  </a>
+</div>
 
 <!-- ── HOW IT WORKS ── -->
 <section class="how" id="how">
@@ -610,98 +667,38 @@
     <div class="step">
       <div class="step-n">01</div>
       <div class="step-title">Собираемся</div>
-      <div class="step-desc">Встречаемся в мастерской. Чай, кофе, конфеты. Немного говорим — о том, что будем делать сегодня и почему это работает.</div>
-    </div>
-    <div class="step">
-      <div class="step-n">02</div>
-      <div class="step-title">Рисуем</div>
-      <div class="step-desc">Знакомимся с техниками вместе, под наблюдением художника. Опыт приобретаем на практике — нужно только желание, остальное появится.</div>
-    </div>
-    <div class="step">
-      <div class="step-n">03</div>
-      <div class="step-title">Смотрим</div>
-      <div class="step-desc">Раскладываем все работы и смотрим вместе. Это не критика — разговор о том, что хотелось сказать и что получилось.</div>
-    </div>
-    <div class="step">
-      <div class="step-n">04</div>
-      <div class="step-title">После</div>
-      <div class="step-desc">Бар Rondepipa — в двух минутах ходьбы. Для всех участников скидка 15%. Хорошее место, чтобы продолжить разговор.</div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── PHOTOS ── -->
-<section class="photos" id="photos">
-  <p class="eyebrow">Как это выглядит</p>
-  <div class="photo-grid">
-    <div class="ph ph-1">
-      <img src="1772657877547.jpeg" alt="Художник объясняет">
-    </div>
-    <div class="ph ph-2">
-      <img src="1772657882919.jpeg" alt="Рисуем вместе">
-    </div>
-    <div class="ph ph-3">
-      <img src="1772657885435.jpeg" alt="Смотрим результаты">
-    </div>
-    <div class="ph ph-4">
-      <img src="bar1.jpeg" alt="Rondepipa">
-    </div>
-    <div class="ph ph-5">
-      <img src="bar2.jpeg" alt="Бар рядом">
-    </div>
-    <div class="ph ph-6">
-      <img src="bar3.jpeg" alt="После занятия">
-    </div>
-  </div>
-  <p class="photo-note">Бар Rondepipa — в двух минутах ✦</p>
-</section>
-
-
-<!-- ── INCLUDES ── -->
-<section class="includes-section" id="includes">
-  <p class="eyebrow">Что входит</p>
-  <h2>Всё что нужно</h2>
-
-  <div class="includes-grid">
-    <div class="inc-card">
-      <div class="inc-icon">🎨</div>
-      <div class="inc-title">Все материалы</div>
-      <div class="inc-desc">Бумага, карандаши, пастель — всё на месте. С собой ничего приносить не нужно.</div>
-    </div>
-    <div class="inc-card">
-      <div class="inc-icon">☕</div>
-      <div class="inc-title">Чай, кофе, конфеты</div>
-      <div class="inc-desc">Мастерская — это гости. Пока собираемся и в перерыве — угощаем.</div>
-    </div>
-    <div class="inc-card">
-      <div class="inc-icon">🍸</div>
-      <div class="inc-title">Скидка в баре</div>
-      <div class="inc-desc">После занятия — 15% скидка в Rondepipa на Сретенке для всех участников.</div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── CTA ── -->
-<section class="cta" id="signup">
-  <h2>Хочу рисовать</h2>
-  <p class="cta-sub">Набираем группу — напишите нам в Telegram</p>
-  <a href="https://t.me/otrookibot" class="btn">
-    <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-    </svg>
-    Записаться
-  </a>
-</section>
-
-
-<!-- ── FOOTER ── -->
-<footer>
-  <span>© 2026 ОТ РУКИ</span>
-  <span>Москва · Большой Сергиевский переулок, 11</span>
-  <span>@otrookibot</span>
-</footer>
-
-</body>
-</html>
+      <div class="step-desc">Встречаемсэя в мастерской. Чай, кофе, конфеты. Немного говорим — о том, что будем делать сегодня и почему это4`4,4,t/�`�,4-t`���]����]���]��\��H��\���]��\��H��\[�����]���]��\��H��\]]H��(4.4`t`�-t/�]���]��\��H��\Y\�ȏ�%�/t,4.�/�/4.4/4`tc�4`H4`�-tat/t.4.�,4/4.4,�/4-t`t`�-K4/�/�-4/t,4,t.�c�-4-t/t.4-t/4at`�-4/�-�/t.4.�,�4'�/�b�`�4/�`4.4/�,t`4-t`�,4-t/4/t,4/�`4,4.�`�.4.�-H8�%4/t`�-�/t/�4`�/�.�c4.�/�4-�-t.�,4/t.4-K4/�`t`�,4.�c4/t/�-H4/�/�c�,�.4`�`tcˏ�]����]���]��\��H��\���]��\��H��\[�����]���]��\��H��\]]H��(t/4/�`�`4.4/�]���]��\��H��\Y\�ȏ�(4,4`t.�.�,4-4b�,�,4-t/4,�`t-H4`4,4,t/�`�b�4.4`t/4/�`�`4.4/4,�/4-t`t`�-K�4+t`�/�4/t-H4.�`4.4`�.4.�,8�%4`4,4-�,�/�,�/�`4/�4`�/�/4a�`�/�4at/�`�-t.�/�`tc4`t.�,4-�,4`�c4.4a�`�/�4/�/�.�`�a�.4.�/�`tc��]����]���]��\��H��\���]��\��H��\[���
+�]���]��\��H��\]]H��'�/�`t.�-O�]���]��\��H��\Y\�ȏ�$t,4`�ۈH\H8�%4,�4-4,�`�aH4/4.4/t`�`�,4atat/�-4c4,tbˈ4%4.�c�4,�`t-taH4`�a�,4`t`�/t.4.�/�,�4`t.�.4-4.�,MIK�4at/�`4/�b4-t-H4/4-t`t`�/�4a�`�/�,tb�4/�`4/�-4/�.�-�.4`�c4`4,4-�,�/�,�/�`��]����]����]�����X�[ۏ����KKH8� 8� ���8� 8� KO���X�[ۈ�\��H���ȈYH���ȏ���\��H�^YX���ȏ�&�,4.�4ct`�/�4,�b�,�.�c�-4.4`����]��\��H���YܚY���]��\��H�LH���[Y�ܘ�H����YȈ[H�'4,4`t`�-t`4`t.�,4cȈ�[OH�ؚ�X�\��][ێ��[�\�
+�	Nȏ���]���]��\��H�L����[Y�ܘ�H�K��YȈ[H�$�.4-4.4-�4/4,4`t`�-t`4`t.�/�.H��[OH�ؚ�X�\��][ێ��[�\�	Nȏ���]���]��\��H�Lȏ��[Y�ܘ�H�˚�YȈ[H�&�/t.4,�.4/�/�4`�-t/�`4.4.4a�,�-t`�,����]���]��\��H�M���[Y�ܘ�H���YȈ[H�(t/4/�`�`4.4/4`4-t-�`�.�c4`�,4`�bȈ�[OH�ؚ�X�\��][ێ��[�\�
+�INȏ���]���]��\��H�MH���[Y�ܘ�H�K��YȈ[H�'4,4`�-t`4.4,4.�bȈ�[OH�ؚ�X�\��][ێ��[�\��	Nȏ���]����]�����X�[ۏ����KKH8� 8� S��QT�8� 8� KO���X�[ۈ�\��H�[��Y\�\�X�[ۈ�YH�[��Y\ȏ���\��H�^YX���ȏ�)�`�/�4,�at/�-4.4`������$�`tdH4a�`�/�4/t`�-�/t/O�����]��\��H�[��Y\�YܚY���]��\��H�[��X�\����]��\��H�[��ZX�ۈ��'��]���]��\��H�[��]]H��$�`t-H4/4,4`�-t`4.4,4.�.�]���]��\��H�[��Y\�ȏ�$t`�/4,4,�,4.�,4`4,4/t-4,4b4.4/�,4`t`�-t.�c8�%4$�`tdH4/t,4/4-t`t`�-K�4(�4`t/�,t/�.H4/t.4a�-t,�/�4/�`4.4/t/�`t.4`�c4/t-H4/t`�-�/t/���]����]���]��\��H�[��X�\����]��\��H�[��ZX�ۈ���%O�]���]��\��H�[��]]H��)�,4.K4.�/�a4-K4.�/�/ta4-t`�b��]���]��\��H�[��Y\�ȏ�'4,4`t`�-t`4`t.�,4c�8�%4ct`�/�4,�/�`t`�.�4c�`�,4.�4`t/�,t.4`4,4-t/4`tc�4.4,�4/�-t`4-t`4b�,�-H8�%4`�,�/�bt,4-t/��]����]���]��\��H�[��X�\����]��\��H�[��ZX�ۈ��'�&O�]���]��\��H�[��]]H��'�`4/�-4/�.�-�-t/t.4-H4`t.�-t-4`�-t`��]���]��\��H�[��Y\�ȏ�$�4-4,�`�aH4/4.4/t`�`�,4aH4/�`�4/4,4`t`�-t`4`t.�/�.H8�%4,t,4`�ۈH\K�4)t/�`4/�b4-t-H4/4-t`t`�/�4a�`�/�,tb�4/�/�,�/�,�/�`4.4`�c4/�4`�/�/4a�`�/�4/t,4`4.4`t/�,�,4.�.��]����]����]�����X�[ۏ����KKH8� 8� �H8� 8� KO���X�[ۈ�\��H��H�YH��Y۝\�����)t/�a�`�4`4.4`t/�,�,4`�c�����\��H��K\�X���'t,4,t.4`4,4-t/4,�`4`�/�/�`�8�%4/t,4/�.4b4.4`�-H4/t,4/4,�[Yܘ[O���H�Y�H�΋���YK������X����\��H������ݙ��Y]Л�H�����[H��\��[���܈�[��H������˝�˛ܙ�̌�ݙȏ��]H�LLK�M
+LL��L�����0E� � ��� � � � ���#LL�LL�L�L�LL�L�K�
+M��M�M��
+ˌ��ˌKK���̌K��ˍ
+�K�MK�L
+��L
+�H�M�K�̍XˌM��Lˌ͋��
+����
+̋K�NK�NK�M��
+��L�LK�͈����K�M��KK�NHK��KK��K���K��M��
+�KLK���KK�
+�LK�KK�L�LK�
+M�K��L�LK��L�LK�L�L����LK�LK�N
+KK��K�M�LK��K��NLK�LK�M��K�N
+ˌ�
+�L��M��ˌ�
+�Lˌ�ˌ
+�K�̋�MK�MKK�
+M�K��L��K�M�K�
+KK��KK���K�L
+���LK��L�K�MMK�
+�Hˌ�
+KK����K�LLˍKLK����K��K�LK��L�K��KLK�
+�KK�
+K��L�K��
+KLK��KK���LK��M�K��K���K��M��̍KK��ˎL�K����ˍNLK�L�
+K��L��L�H
+��NNLˌMˌ�̋LK��
+�
+��KLK����
+�
+͋LK���^��ς��ݙς�4%�,4/�.4`t,4`�c4`tc�O����X�[ۏ����KKH8� 8� ���T�8� 8� KO�����\����[���H���4'�(�4(4(�&�&��[����[��'4/�`t.�,�,0��4$t/�.�c4b4/�.H4(t-t`4,�.4-t,�`t.�.4.H4/�-t`4-t`�.�/�.LO��[����[�������X����[���ٛ��\����؛�O���[�
