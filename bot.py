@@ -109,7 +109,7 @@ def _main_keyboard():
                               callback_data="teacher:zhenya")],
         [InlineKeyboardButton("✏️ Основы рисования · вт и чт · 5 000 ₽",
                               callback_data="teacher:polina")],
-        [InlineKeyboardButton("📚 Курс «Основы» с 17 марта — узнать первыи",
+        [InlineKeyboardButton("📚 Курс «Основы» с 17 марта — узнать первым",
                               callback_data="teacher:waitlist")],
     ])
 
@@ -183,11 +183,11 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ── ← В начало (callback) ────────────────────────────────────
 async def back_to_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Возвращает в главное меню из любого шага."""
+    """Возвращает в главное меню из любого иага."""
     query = update.callback_query
     await query.answer()
     kb = _main_keyboard()
-    # Пробуем обновить подпись фото; если не получится ℐ s�бновим тeкст
+    # Пробуем обновить подпись фото; если не получится — обновим текст
     try:
         await query.edit_message_caption(
             caption=WELCOME_TEXT,
@@ -230,63 +230,152 @@ async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         text = (
             "*Курс «Основы рисования»* — 4 занятия подряд:\n"
             "перспектива → форма → свет → портрет.\n\n"
-            "Запись сещё не о�`�.�`4b�.�,4`tc4/t/�4/4b�4/t,4/�.4b4-t/4`�-t,t-H4/�-t`4,�b�/
-4/�.JH<'�c�����&�,4.�4`�-t,tc�4-�/�,�`�`�Ȃ�
-B��H[�[�R�^X��\�X\��\
-�ؘX��ܛ��
-WJB��N��]�Z]]Y\�K�Y]�Y\��Y�W��\[ۊ��\[ۏ]^\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B�^�\^�\[ێ��]�Z]]Y\�K�Y]�Y\��Y�W�^
-�^]^\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B��]\���UӐSQB���8� 8� 4$�b�,t/�`4-4,4`�b�8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� �]�Z[X�HH���܈�[��T��SӔ�Y��ȝYȗHOHY�[��Ȝ��ȗH�B��Y���]�Z[X�N��XX�\�ۘ[YHH�%�-t/tc�4$�/�`4/�-4.4/t,�Y�Y�OH��[�XH�[�H�'�/�.�.4/t,4+�`4a�-t,�,��^H
-���&�4`t/�-�,4.�-t/t.4c�4`t,�/�,t/�-4/tb�aH4/4-t`t`�4`��XX�\�ۘ[Y_H4`t-t.ta�,4`H4/t-t`�<'�%�����'t,4/�.4b4.4/t,4/8�%4/�/�c�,�c�`�`tc�4/t/�,�b�-H4-4,4`�bΈ�����X����
-B�؈H[�[�R�^X��\�X\��\
-�ؘX��ܛ��
-WJB��N��]�Z]]Y\�K�Y]�Y\��Y�W��\[ۊ�\[ۏ]^�\W�X\��\Z؊B�^�\^�\[ێ��]�Z]]Y\�K�Y]�Y\��Y�W�^
-^]^�\W�X\��\Z؊B��]\���۝�\��][ے[�\��S����[\HH]�Z[X�V�B��ܛX]ۘ[YHH�[\Vș�ܛX]�B��Y��ܛX]ۘ[YHOH�(t,�/�,t/�-4/t/�-H4`4.4`t/�,�,4/t.4-H���\��H
-��$�-ta�-t`4,t-t-�4`t`�`4/�,�/�.H4/�`4/�,�`4,4/4/4b�8�%4,t-t`4dtb4c4`�-t/4`�4.4.�.4`4.4`t`�-tb4c4`t,�/�dK���/�`4-t/�/�-4,4,�,4`�-t.�c4`4c�-4/�/4-t`t.�.4/t`�-�/t,4/�/�/4/�btc�����(�,�/�.�c4/4,4`t.�c�/t,4c�4/�,4`t`�-t.�c4/4,4`t.�c�/tb�-H4.�,4`4,4/t-4,4b4.�4'�/�b�`�4/t-H4/t`�-�-t/K���
-B�[�N��\��H
-��$4.�,4-4-t/4.4a�-t`t.�.4.H4/�/�-4at/�-�4/�`�4/�-t`4`t/�-t.�`�.4,�b�4-4/�4/�/�`4`�`4-t`�,�����&�,4`4,4/t-4,4b4/4,4`t.�c�/t,4c�4.4`t`�at,4c�4/�,4`t`�-t-�c�4'�/�b�`�4/t-H4/t`�-�-t/K�M�Ȃ�
-B���^X��\�H�B��܈�[�]�Z[X�N������H����������_H�������ܙ
-�������J_H��X�[H������]I�_H0������[YI�_H0�������H���^X��\��\[�
-�[�[�R�^X��\��]ۊX�[�[�X���]OY���\Ξ����Y	�_H�WJB��^X��\��\[�
-ؘX��ܛ��
-JB���\[ۈH
-����ٛܛX]ۘ[Y_J������H8��H0��4,�`t-H4/4,4`�-t`4.4,4.�b�4,�.�.�c�a�-t/tb��������\��W�����$�b�,t-t`4.4`�-4/�,t/tb�.H4,�-ta�-t`���
-B�؈H[�[�R�^X��\�X\��\
-�^X��\�
-B��N��]�Z]]Y\�K�Y]�Y\��Y�W��\[ۊ��\[ۏX�\[ۋ\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B�^�\^�\[ێ��]�Z]]Y\�K�Y]�Y\��Y�W�^
-�^X�\[ۋ\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B��]\������W��T��Sӂ����8� 8� 4$�b�,t/�`4-4,4`�b�8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� �\�[��Y�����W��\��[ۊ\]N�\]K���۝^\\ˑQ�US�TJHO�[���]Y\�HH\]K��[�X���]Y\�B�]�Z]]Y\�K�[���\�
-B���\��[ۗ�YH]Y\�K�]K��]
-���JV�WB��\��[ۈH�^
+            "Запись ещё не открылась, но мы напишем тебе первым(ой) 🙌\n\n"
+            "Как тебя зовут?"
+        )
+        kb = InlineKeyboardMarkup([_back_row()])
+        try:
+            await query.edit_message_caption(
+                caption=text, parse_mode="Markdown", reply_markup=kb
+            )
+        except Exception:
+            await query.edit_message_text(
+                text=text, parse_mode="Markdown", reply_markup=kb
+            )
+        return GET_NAME
 
-��܈�[��T��SӔ�Y��ȚY�HOH�\��[ۗ�Y
-K�ۙJB��Y����\��[ۈ܈�\��[ۖȜ��ȗHH��^H�(�/�`K4.�`�/�t`�/�4`�`t/�-t.�4`4,4/tc4b4-H<'�!W��'t,4-�/4.0����4$�4/t,4a�,4.�/���8�%4/�/�.�,4-�`�4-4`4`�,�.4-H4-4,4`�bˈ��؈H[�[�R�^X��\�X\��\
-�ؘX��ܛ��
-WJB��N��]�Z]]Y\�K�Y]�Y\��Y�W��\[ۊ�\[ۏ]^�\W�X\��\Z؊B�^�\^�\[ێ��]�Z]]Y\�K�Y]�Y\��Y�W�^
-^]^�\W�X\��\Z؊B��]\���۝�\��][ے[�\��S�����\�\��]VȘ����[�ȗHH�\H����\��[ۈ����[YH���\��[ۖș�ܛX]�K��XX�\����\��[ۖȝXX�\��K��]H������\��[ۖ��]I�_H0����\��[ۖ��[YI�_H����X�H���\��[ۖȜ�X�H�K��Y���\��[ۖȚY�K�B�^H
-������\��[ۖ��]I�_J�4,���\��[ۖ��[YI�_H8�%4/�`�/4-ta�-t/t/�8�)������&�,4.�4`�-t,tc�4-�/�,�`�`�Ȃ�
-B�؈H[�[�R�^X��\�X\��\
-�ؘX��ܛ��
-WJB��N��]�Z]]Y\�K�Y]�Y\��Y�W��\[ۊ��\[ۏ]^\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B�^�\^�\[ێ��]�Z]]Y\�K�Y]�Y\��Y�W�^
-�^]^\��W�[�OH�X\���ۈ��\W�X\��\Z؂�
-B��]\���UӐSQB����8� 8� 4&4/4c�8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� �\�[��Y��]ۘ[YJ\]N�\]K���۝^\\ˑQ�US�TJHO�[����[YHH\]K�Y\��Y�K�^���\
+    # ── Выбор даты ───────────────────────────────────────────
+    available = [s for s in SESSIONS if s["tag"] == tag and s["spots"] > 0]
 
-B�Y�[��[YJH���]�Z]\]K�Y\��Y�K��\W�^
-�'t,4/�.4b4.4`t,�/�dH4.4/4cΈ�B��]\���UӐSQB����\�\��]Vț�[YH�HH�[YB�����[��H��\�\��]K��]
-�����[�ȋ�JB��Y�����[�˙�]
-�\H�HOH��Z]\����\��H��ۘ[Y_K4-�,4/�.4`t,4.�.W��'�`t`�,4,�c4/t/�/4-t`8�%4/t,4/�.4b4-t/4.�,4.�4`�/�.�c4.�/�4/�`�.�`4/�-t`�`tc�4-�,4/�.4`tc���[�N��\��H��ۘ[Y_K4/�`4.4c�`�/t/�W��'�`t`�,4,�c4/t/�/4-t`4`�-t.�-ta4/�/t,8�%4/t,4/�.4b4-t/4/t,4/�/�/4.4/t,4/t.4-H4/t,4.�,4/t`�/t-N����]�Z]\]K�Y\��Y�K��\W�^
-�\��
-�������\�8�%4,�-t`4/t`�`�c4`tc�4,�4,�.�,4,�/t/�-H4/4-t/tc�ȋ�\��W�[�OH�X\���ۈ��
-B��]\���U�ӑB����8� 8� 4(�-t.�-ta4/�/H8���4a4.4/t,4.�8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� 8� �\�[��Y��]�ۙJ\]N�\]K���۝^\\ˑQ�US�TJHO�[���ۙHH\]K�Y\��Y�K�^���\
+    if not available:
+        teacher_name = "Женя Бородина" if tag == "zhenya" else "Полина Ярцева"
+        text = (
+            f"К сожалению, свободных мест у {teacher_name} сейчас нет 😔\n\n"
+            "Напиши нам — появятся новые даты: @otrookibot"
+        )
+        kb = InlineKeyboardMarkup([_back_row()])
+        try:
+            await query.edit_message_caption(caption=text, reply_markup=kb)
+        except Exception:
+            await query.edit_message_text(text=text, reply_markup=kb)
+        return ConversationHandler.END
 
-B��[YHH��\�\��]K��]
-��[YH���%�B�����[��H��\�\��]K��]
-�����[�ȋ�JB�\�\�H\]K�Y��X�]�W�\�\���ܙY�H���\�\��\�\��[Y_H�Y�\�\��\�\��[YH[�H��Y�\�\��YH���Y�����[�˙�]
-�\H�HOH��Z]\����]�Z]\]K�Y\��Y�K��\W�^
-��%�,4/�.4`t,4.�.4`�b�4,�4/�-t`4,�/�/4`t/�.4`t.�-H<'�c�����&�,4.�4`�/�.�c4.�/�4.�`�`4`H4,t`�-4-t`�4,�/�`�/�,�8�%4/t,4/�.4b4-t/4`t`4,4-�`�4`H4/�`4/�,�`4,4/4/4/�.H4.4-4,4`�,4/4.������%t`tc вопросы — пиши прямо сюда 🙂",
+    sample      = available[0]
+    format_name = sample["format"]
+
+    if format_name == "Свободное рисование":
+        desc = (
+            "Вечер без строгой программы — берёшь тему или рисуешь своё, "
+            "преподаватель рядом если нужна помощь.\n"
+            "Уголь, масляная пастель, масляные карандаши. Опыт не нужен."
+        )
+    else:
+        desc = (
+            "Академический подход: от перспективы до портрета.\n"
+            "Карандаш, масляная и сухая пастель. Опыт не нужен. 16+"
+        )
+
+    keyboard = []
+    for s in available:
+        spots_txt = f"{s['spots']} {_spots_word(s['spots'])}"
+        label = f"{s['date']} · {s['time']} · {spots_txt}"
+        keyboard.append([InlineKeyboardButton(label, callback_data=f"ses:{s['id']}")])
+    keyboard.append(_back_row())
+
+    caption = (
+        f"*{format_name}*\n"
+        f"5 000 ₽ · все материалы включены\n\n"
+        f"{desc}\n\n"
+        "Выбери удобный вечер:"
+    )
+    kb = InlineKeyboardMarkup(keyboard)
+    try:
+        await query.edit_message_caption(
+            caption=caption, parse_mode="Markdown", reply_markup=kb
+        )
+    except Exception:
+        await query.edit_message_text(
+            text=caption, parse_mode="Markdown", reply_markup=kb
+        )
+    return CHOOSE_SESSION
+
+
+# ── Выбор даты ───────────────────────────────────────────────
+async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    session_id = query.data.split(":", 1)[1]
+    session = next((s for s in SESSIONS if s["id"] == session_id), None)
+
+    if not session or session["spots"] <= 0:
+        text = "Упс, кто-то успел раньше 😅\n\nНажми ª← В начало» — покажу другие даты."
+        kb = InlineKeyboardMarkup([_back_row()])
+        try:
+            await query.edit_message_caption(caption=text, reply_markup=kb)
+        except Exception:
+            await query.edit_message_text(text=text, reply_markup=kb)
+        return ConversationHandler.END
+
+    ctx.user_data["booking"] = {
+        "type":    "session",
+        "name":    session["format"],
+        "teacher": session["teacher"],
+        "date":    f"{session['date']} · {session['time']}",
+        "price":   session["price"],
+        "id":      session["id"],
+    }
+    text = (
+        f"*{session['date']}* в {session['time']} — отмечено ✦\n\n"
+        "Как тебя зовут?"
+    )
+    kb = InlineKeyboardMarkup([_back_row()])
+    try:
+        await query.edit_message_caption(
+            caption=text, parse_mode="Markdown", reply_markup=kb
+        )
+    except Exception:
+        await query.edit_message_text(
+            text=text, parse_mode="Markdown", reply_markup=kb
+        )
+    return GET_NAME
+
+
+# ── Имя ──────────────────────────────────────────────────────
+async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    name = update.message.text.strip()
+    if len(name) < 2:
+        await update.message.reply_text("Напиши своё имя:")
+        return GET_NAME
+
+    ctx.user_data["name"] = name
+    booking = ctx.user_data.get("booking", {})
+
+    if booking.get("type") == "waitlist":
+        msg = f"{name}, записали!\n\nОставь номер — напишем, как только откроется запись:"
+    else:
+        msg = f"{name}, приятно!\n\nОставь номер телефона — напишем напоминание накануне:"
+
+    await update.message.reply_text(
+        msg + "\n\n_/start — вернуться в главное меню_",
+        parse_mode="Markdown",
+    )
+    return GET_PHONE
+
+
+# ── Телефон → финал ──────────────────────────────────────────
+async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    phone   = update.message.text.strip()
+    name    = ctx.user_data.get("name", "—")
+    booking = ctx.user_data.get("booking", {})
+    user    = update.effective_user
+    tg_ref  = f"@{user.username}" if user.username else f"id{user.id}"
+
+    if booking.get("type") == "waitlist":
+        await update.message.reply_text(
+            "Записали, ты в первом списке 🙌\n\n"
+            "Как только курс будет готов — напишем сразу, с программой и датами.\n\n"
+            "Есэь вопросы — пиши прямо сюда 🙂",
         )
         admin_msg = (
             f"📋 *Лист ожидания — Курс с Полиной*\n\n"
@@ -309,7 +398,7 @@ B��[YHH��\�\��]K��]
             f"💸 *Оплата:* переведи на {PAYMENT_BANK} по номеру "
             f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
             f"{ADDRESS}\n\n"
-            "Если чтп-то поменялось или есть вопросы — просто напиши сюда 🙂",
+            "Если что-то поменялось или есть вопросы — просто напиши сюда 🙂",
             parse_mode="Markdown",
         )
         admin_msg = (
@@ -343,7 +432,7 @@ B��[YHH��\�\��]K��]
 
 # ── /cancel ──────────────────────────────────────────────────
 async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Окей, без проблем. Передумаешь — /start 🙂")
+    await update.message.reply_text("Окей, бел проблем. Передумаешь — /start 🙂")
     return ConversationHandler.END
 
 
