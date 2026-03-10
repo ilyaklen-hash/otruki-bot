@@ -85,7 +85,7 @@ SESSIONS = [
      "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
     {"id": "p5", "tag": "polina", "teacher": "Полина Ярцева",
      "format": "Основы рисования",
-     "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+ 0   "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
 ]
 
 # ═══════════════════════════════════════════════════════════
@@ -171,8 +171,8 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
                 parse_mode="Markdown",
                 reply_markup=kb,
             )
-    except FileNotFoundError:
-        log.warning("welcome.png не найден, отправляю текстом")
+    except Exception:
+        log.warning("welcome.png: ошибка отправки фото, отправляю текстом")
         await update.message.reply_text(
             WELCOME_TEXT,
             parse_mode="Markdown",
@@ -183,11 +183,11 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ── ← В начало (callback) ────────────────────────────────────
 async def back_to_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Возвращает в главное меню из любого иага."""
+    """Возвращает в главное меню из любого шага."""
     query = update.callback_query
     await query.answer()
     kb = _main_keyboard()
-    # Пробуем обновить подпись фото; если не получится — обновим текст
+    # Пробуем обновить подпись фотп; если не получится — обновим текст
     try:
         await query.edit_message_caption(
             caption=WELCOME_TEXT,
@@ -267,7 +267,7 @@ async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         desc = (
             "Вечер без строгой программы — берёшь тему или рисуешь своё, "
             "преподаватель рядом если нужна помощь.\n"
-            "Уголь, масляная пастель, масляные карандаши. Опыт не нужен."
+            "Уголь, масляная пастель, масляные карандаш��. Опыэ не нужен."
         )
     else:
         desc = (
@@ -309,7 +309,7 @@ async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     session = next((s for s in SESSIONS if s["id"] == session_id), None)
 
     if not session or session["spots"] <= 0:
-        text = "Упс, кто-то успел раньше 😅\n\nНажми ª← В начало» — покажу другие даты."
+        text = "Упс, кто-то успел раньше 😅\n\nНажми «← В начало» — покажу другие даты."
         kb = InlineKeyboardMarkup([_back_row()])
         try:
             await query.edit_message_caption(caption=text, reply_markup=kb)
@@ -327,7 +327,7 @@ async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     }
     text = (
         f"*{session['date']}* в {session['time']} — отмечено ✦\n\n"
-        "Как тебя зовут?"
+        "Как тебя зовуе?"
     )
     kb = InlineKeyboardMarkup([_back_row()])
     try:
@@ -375,7 +375,7 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(
             "Записали, ты в первом списке 🙌\n\n"
             "Как только курс будет готов — напишем сразу, с программой и датами.\n\n"
-            "Есэь вопросы — пиши прямо сюда 🙂",
+ (          "Есть вопросы — пиши прямо сюда 🙂",
         )
         admin_msg = (
             f"📋 *Лист ожидания — Курс с Полиной*\n\n"
@@ -432,7 +432,7 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ── /cancel ──────────────────────────────────────────────────
 async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Окей, бел проблем. Передумаешь — /start 🙂")
+    await update.message.reply_text("Окей, без проблем. Передумаешь — /start 🙂")
     return ConversationHandler.END
 
 
@@ -440,7 +440,7 @@ async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     user   = update.effective_user
     tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
-    text   = update.message.text or "(не текст)"
+    text   = update.message.text or "(не секст)"
 
     await update.message.reply_text(
         "Увидели, ответим скоро 🙂\n\n"
