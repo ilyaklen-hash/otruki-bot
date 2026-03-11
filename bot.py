@@ -4,8 +4,8 @@
 ==============================================
 
 Флоу:
-    /start → фотп + выбор формата → дата → имя → телефон → подтверждение
-    Кнопка «Курс» → имя → телефон → лист ожидания
+    /start → фото + выбор формата → дата → имя → телефон → подтверждение
+    Кнопка «Қурс» → имя → телефон → лист ожидания
     Вопросы вне флоу → пересылаются администратору
     Кнопка «← В начало» / команда /start — перезапуск в любой момент
 """
@@ -85,7 +85,7 @@ SESSIONS = [
      "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
     {"id": "p5", "tag": "polina", "teacher": "Полина Ярцева",
      "format": "Основы рисования",
- (   "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+     "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
 ]
 
 # ═══════════════════════════════════════════════════════════
@@ -257,7 +257,7 @@ async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         desc = (
             "Вечер без строгой программы — берёшь тему или рисуешь своё, "
             "преподаватель рядом если нужна помощь.\n"
-            "Уголь, масляная пастель, масляные карандаши. Опыэ не нужен."
+            "Уголь, масляная пастель, масляные карандаши. Опыт не нужен."
         )
     else:
         desc = (
@@ -377,11 +377,11 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         # Уменьшаем количество мест
         for s in SESSIONS:
             if s["id"] == booking.get("id"):
-     (          s["spots"] = max(0, s["spots"] - 1)
+                s["spots"] = max(0, s["spots"] - 1)
                 break
 
         await update.message.reply_text(
-            f"Всё, ждём тебя ✦\n\n"
+            f"Всѓ, ждём тебя ✦\n\n"
             f"📌 *{booking.get('name')}*\n"
             f"🗓 {booking.get('date')}\n"
             f"💳 {booking.get('price')}\n\n"
@@ -430,7 +430,7 @@ async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
 async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
     user   = update.effective_user
     tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
-    text   = update.message.text or "(не секст)"
+    text   = update.message.text or "(не текст)"
 
     await update.message.reply_text(
         "Увидели, ответим скоро 🙂\n\n"
@@ -475,7 +475,7 @@ def main() -> None:
                 CallbackQueryHandler(choose_session, pattern=r"^ses:"),
                 back_handler,
             ],
-     (      GET_NAME: [
+            GET_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
                 back_handler,
             ],
