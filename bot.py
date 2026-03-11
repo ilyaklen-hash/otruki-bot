@@ -4,7 +4,7 @@
 ==============================================
 
 Флоу:
-    /start → фото + выбор формата → дата → имя → телефон → подтверждение
+    /start → фотп + выбор формата → дата → имя → телефон → подтверждение
     Кнопка «Курс» → имя → телефон → лист ожидания
     Вопросы вне флоу → пересылаются администратору
     Кнопка «← В начало» / команда /start — перезапуск в любой момент
@@ -85,7 +85,7 @@ SESSIONS = [
      "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
     {"id": "p5", "tag": "polina", "teacher": "Полина Ярцева",
      "format": "Основы рисования",
- 0   "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
+ (   "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 10},
 ]
 
 # ═══════════════════════════════════════════════════════════
@@ -161,23 +161,13 @@ def _append_to_sheet(row: list) -> None:
 
 # ── /start ───────────────────────────────────────────────────
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Отправляет приветственное фото с текстом и кнопками."""
+    """Отправляет приветственный текст с кнопками."""
     kb = _main_keyboard()
-    try:
-        with open(WELCOME_PHOTO, "rb") as photo_file:
-            await update.message.reply_photo(
-                photo=photo_file,
-                caption=WELCOME_TEXT,
-                parse_mode="Markdown",
-                reply_markup=kb,
-            )
-    except Exception:
-        log.warning("welcome.png: ошибка отправки фото, отправляю текстом")
-        await update.message.reply_text(
-            WELCOME_TEXT,
-            parse_mode="Markdown",
-            reply_markup=kb,
-        )
+    await update.message.reply_text(
+        WELCOME_TEXT,
+        parse_mode="Markdown",
+        reply_markup=kb,
+    )
     return CHOOSE_TEACHER
 
 
@@ -187,7 +177,7 @@ async def back_to_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
     kb = _main_keyboard()
-    # Пробуем обновить подпись фотп; если не получится — обновим текст
+    # Пробуем обновить подпись фото; если не получится — обновим текст
     try:
         await query.edit_message_caption(
             caption=WELCOME_TEXT,
@@ -267,7 +257,7 @@ async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         desc = (
             "Вечер без строгой программы — берёшь тему или рисуешь своё, "
             "преподаватель рядом если нужна помощь.\n"
-            "Уголь, масляная пастель, масляные карандаш��. Опыэ не нужен."
+            "Уголь, масляная пастель, масляные карандаши. Опыэ не нужен."
         )
     else:
         desc = (
@@ -327,7 +317,7 @@ async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     }
     text = (
         f"*{session['date']}* в {session['time']} — отмечено ✦\n\n"
-        "Как тебя зовуе?"
+        "Как тебя зовут?"
     )
     kb = InlineKeyboardMarkup([_back_row()])
     try:
@@ -375,7 +365,7 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text(
             "Записали, ты в первом списке 🙌\n\n"
             "Как только курс будет готов — напишем сразу, с программой и датами.\n\n"
- (          "Есть вопросы — пиши прямо сюда 🙂",
+            "Есть вопросы — пиши прямо сюда 🙂",
         )
         admin_msg = (
             f"📋 *Лист ожидания — Курс с Полиной*\n\n"
@@ -387,7 +377,7 @@ async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
         # Уменьшаем количество мест
         for s in SESSIONS:
             if s["id"] == booking.get("id"):
-                s["spots"] = max(0, s["spots"] - 1)
+     (          s["spots"] = max(0, s["spots"] - 1)
                 break
 
         await update.message.reply_text(
@@ -485,7 +475,7 @@ def main() -> None:
                 CallbackQueryHandler(choose_session, pattern=r"^ses:"),
                 back_handler,
             ],
-            GET_NAME: [
+     (      GET_NAME: [
                 MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
                 back_handler,
             ],
