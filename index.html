@@ -48,7 +48,7 @@
     /* ─── HERO ─── */
     .hero {
       min-height: 100svh;
-      padding: 36px var(--pad) 40px;
+      padding: 36px var(--pad) 0;
       display: grid;
       grid-template-rows: auto auto 1fr;
       gap: 0;
@@ -83,9 +83,8 @@
     .hero-nav a { text-decoration: none; color: var(--dim); transition: color 0.2s; }
     .hero-nav a:hover { color: var(--ink); }
 
-    /* tagline выше — сразу под лого */
     .hero-tagline-wrap {
-      padding-bottom: 40px;
+      padding-bottom: 48px;
     }
 
     .hero-tagline {
@@ -97,20 +96,56 @@
     }
     .hero-tagline strong { color: var(--ink); font-weight: 400; }
 
-    /* полоса на всю ширину экрана */
-    .hero-photo {
+    /* ─── PHOTO MARQUEE ─── */
+    .hero-marquee {
       width: calc(100% + 2 * var(--pad));
       margin-left: calc(-1 * var(--pad));
       overflow: hidden;
-      height: clamp(200px, 28vh, 340px);
+      height: clamp(200px, 32vh, 400px);
+      position: relative;
+      align-self: end;
     }
 
-    .hero-photo img {
-      width: 100%;
+    /* fade edges */
+    .hero-marquee::before,
+    .hero-marquee::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: clamp(40px, 8vw, 120px);
+      z-index: 2;
+      pointer-events: none;
+    }
+    .hero-marquee::before { left: 0;  background: linear-gradient(to right, var(--bg) 0%, transparent 100%); }
+    .hero-marquee::after  { right: 0; background: linear-gradient(to left,  var(--bg) 0%, transparent 100%); }
+
+    .marquee-track {
+      display: flex;
+      gap: 10px;
+      animation: marquee 36s linear infinite;
+      width: max-content;
       height: 100%;
+    }
+    .marquee-track:hover { animation-play-state: paused; }
+
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .marquee-track img {
+      height: 100%;
+      width: auto;
+      flex-shrink: 0;
       object-fit: cover;
-      object-position: center 38%;
+      border-radius: 6px;
       display: block;
+      transition: transform 0.4s ease;
+    }
+    .marquee-track img:hover {
+      transform: scale(1.02);
+      z-index: 1;
+      position: relative;
     }
 
     /* ─── TRACKS ─── */
@@ -137,7 +172,8 @@
       border: 1px solid rgba(0,0,0,0.18);
       border-radius: 100px;
       padding: 6px 14px;
-      margin-bottom: 32px;
+      margin-top: 16px;
+      margin-bottom: 28px;
       color: var(--dim);
     }
 
@@ -147,7 +183,7 @@
       font-weight: 700;
       line-height: 1.08;
       letter-spacing: -0.02em;
-      margin-bottom: 14px;
+      margin-bottom: 0;
     }
 
     .track-teacher { font-size: 14px; color: var(--dim); font-style: italic; margin-bottom: 24px; }
@@ -247,55 +283,6 @@
       line-height: 1.75;
     }
 
-    /* ─── SCHEDULE ─── */
-    .schedule { background: var(--bg); padding: 100px var(--pad); }
-
-    .schedule h2 { margin-bottom: 60px; }
-
-    .sched-list { list-style: none; }
-
-    .sched-item {
-      display: grid;
-      grid-template-columns: 56px 1fr auto;
-      gap: 32px;
-      align-items: center;
-      padding: 26px 0;
-      border-bottom: 1px solid rgba(0,0,0,0.07);
-    }
-    .sched-item:first-child { border-top: 1px solid rgba(0,0,0,0.07); }
-
-    .sched-day {
-      font-family: 'Unbounded', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      color: var(--dim);
-      opacity: 0.6;
-    }
-
-    .sched-name { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
-
-    .sched-teacher { font-size: 13px; color: var(--dim); font-style: italic; }
-
-    .sched-price {
-      font-family: 'Unbounded', sans-serif;
-      font-size: 15px;
-      font-weight: 700;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .sched-price span {
-      display: block;
-      font-size: 11px;
-      font-weight: 400;
-      font-family: 'Inter', sans-serif;
-      color: var(--dim);
-      margin-top: 3px;
-    }
-
-    .sched-item.soon { opacity: 0.35; }
-
     /* ─── HOW ─── */
     .how { padding: 100px var(--pad); background: var(--ink); color: var(--bg); }
 
@@ -317,32 +304,6 @@
 
     .step-desc { font-size: 14px; line-height: 1.75; color: rgba(255,255,255,0.45); }
 
-    /* ─── PHOTOS ─── */
-    .photos { padding: 100px var(--pad); }
-
-    .photo-grid {
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      grid-template-rows: 300px 260px;
-      gap: 12px;
-      margin-top: 48px;
-    }
-
-    .ph { overflow: hidden; border-radius: 6px; background: #d0d0c8; }
-
-    .ph img {
-      width: 100%; height: 100%;
-      object-fit: cover; display: block;
-      transition: transform 0.55s ease;
-    }
-    .ph:hover img { transform: scale(1.04); }
-
-    .ph-1 { grid-column: 1 / 5;  grid-row: 1 / 3; }
-    .ph-2 { grid-column: 5 / 9;  grid-row: 1 / 2; }
-    .ph-3 { grid-column: 9 / 13; grid-row: 1 / 2; }
-    .ph-4 { grid-column: 5 / 9;  grid-row: 2 / 3; }
-    .ph-5 { grid-column: 9 / 13; grid-row: 2 / 3; }
-
     /* ─── INCLUDES ─── */
     .includes-section { padding: 100px var(--pad); }
 
@@ -361,7 +322,7 @@
     .inc-title { font-size: 16px; font-weight: 500; margin-bottom: 10px; }
     .inc-desc { font-size: 14px; color: var(--dim); line-height: 1.7; }
 
-    /* ─── INLINE BTN (в карточках) ─── */
+    /* ─── INLINE BTN ─── */
     .btn-inline {
       display: inline-flex;
       align-items: center;
@@ -378,9 +339,6 @@
       margin-top: 36px;
     }
     .btn-inline:hover { opacity: 0.8; transform: translateY(-1px); }
-
-    /* CTA после расписания */
-    .sched-cta { padding: 56px var(--pad) 100px; display: flex; justify-content: center; }
 
     /* ─── CTA ─── */
     .cta {
@@ -434,29 +392,17 @@
       .tracks-grid, .includes-grid { grid-template-columns: 1fr; }
       .teachers-grid { grid-template-columns: 1fr 1fr; gap: 36px; }
       .steps { grid-template-columns: 1fr 1fr; gap: 36px; }
-      .sched-item { grid-template-columns: 48px 1fr; }
-      .sched-price { display: none; }
-      .photo-grid {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto;
-      }
-      .ph-1 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 2 / 3; }
-      .ph-2 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 2 / 3; }
-      .ph-3 { grid-column: 1 / 2; grid-row: auto; aspect-ratio: 4 / 3; }
-      .ph-4 { grid-column: 2 / 3; grid-row: auto; aspect-ratio: 4 / 3; }
-      .ph-5 { grid-column: 1 / 3; grid-row: auto; aspect-ratio: 16 / 9; }
+      .photo-masonry { columns: 2; }
     }
 
     @media (max-width: 600px) {
       .hero-nav { display: none; }
-      .hero-photo { height: clamp(140px, 22vh, 220px); }
       .teachers-grid { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; }
-      .photo-grid { grid-template-columns: 1fr; }
-      .ph-1, .ph-2, .ph-3, .ph-4, .ph-5 { grid-column: 1 / 2; aspect-ratio: 4 / 3; }
+      .photo-masonry { columns: 2; column-gap: 6px; }
+      .pm-item { margin-bottom: 6px; }
       .track { padding: 40px 28px; }
       .inc-card { padding: 36px 28px; }
-      .sched-item { grid-template-columns: 44px 1fr; gap: 16px; }
       .logo-img { max-width: 75vw; }
     }
   </style>
@@ -470,19 +416,57 @@
     <nav class="hero-nav">
       <a href="#tracks">Программы</a>
       <a href="#teachers">Преподаватели</a>
-      <a href="#schedule">Расписание</a>
+      <a href="#how">Как проходит</a>
       <a href="#signup">Записаться</a>
     </nav>
   </header>
 
   <div class="hero-tagline-wrap">
     <p class="hero-tagline">
-      <strong>Школа графики</strong> — образование с нуля и повышение мастерства.<br>
-      Рисуем, ходим на выставки и в музеи, общаемся с художниками.<br>
+      <strong>Школа графики</strong> — образование с нуля и повышение мастерства.
+      Рисуем, ходим на выставки и в музеи, общаемся с художниками.
       Теория и практика, история искусств — и настоящее комьюнити.
     </p>
   </div>
 
+  <!-- бесконечная лента фото -->
+  <div class="hero-marquee">
+    <div class="marquee-track" id="marqueeTrack">
+      <img src="Hero/1.jpeg"                              alt="">
+      <img src="Hero/2.jpeg"                              alt="">
+      <img src="Hero/3.jpeg"                              alt="">
+      <img src="Hero/8.jpeg"                              alt="">
+      <img src="Hero/IMG_9004.jpg"                        alt="">
+      <img src="Hero/IMG_9018.jpg"                        alt="">
+      <img src="Hero/IMG_9023.jpg"                        alt="">
+      <img src="Hero/IMG_9052.jpg"                        alt="">
+      <img src="Hero/IMG_9061.jpg"                        alt="">
+      <img src="Hero/IMG_9078.jpg"                        alt="">
+      <img src="Hero/IMG_9103.jpg"                        alt="">
+      <img src="Hero/1773231547050.jpeg"                  alt="">
+      <img src="Hero/1773231554130.jpeg"                  alt="">
+      <img src="Hero/1773231557709.jpeg"                  alt="">
+      <img src="Hero/1773231563554.jpeg"                  alt="">
+      <img src="Hero/photo_2026-03-04%2023.58.40.jpeg"    alt="">
+      <!-- дубль для бесшовного зацикливания -->
+      <img src="Hero/1.jpeg"                              alt="">
+      <img src="Hero/2.jpeg"                              alt="">
+      <img src="Hero/3.jpeg"                              alt="">
+      <img src="Hero/8.jpeg"                              alt="">
+      <img src="Hero/IMG_9004.jpg"                        alt="">
+      <img src="Hero/IMG_9018.jpg"                        alt="">
+      <img src="Hero/IMG_9023.jpg"                        alt="">
+      <img src="Hero/IMG_9052.jpg"                        alt="">
+      <img src="Hero/IMG_9061.jpg"                        alt="">
+      <img src="Hero/IMG_9078.jpg"                        alt="">
+      <img src="Hero/IMG_9103.jpg"                        alt="">
+      <img src="Hero/1773231547050.jpeg"                  alt="">
+      <img src="Hero/1773231554130.jpeg"                  alt="">
+      <img src="Hero/1773231557709.jpeg"                  alt="">
+      <img src="Hero/1773231563554.jpeg"                  alt="">
+      <img src="Hero/photo_2026-03-04%2023.58.40.jpeg"    alt="">
+    </div>
+  </div>
 </section>
 
 
@@ -495,8 +479,9 @@
 
     <!-- ПОЛИНА — слева -->
     <div class="track">
-      <span class="track-tag">Основы рисования</span>
-      <h3>Полина<br>Ярцева</h3>
+      <h3>Основы<br>рисования</h3>
+      <span class="track-tag">Полина Ярцева</span>
+      <span class="track-tag" style="margin-left:6px">Михаил Ганнушкин</span>
       <p class="track-teacher">Разовое занятие · вт и чт</p>
       <p class="track-desc">
         Академический подход к процессу обучения, от перспективы до портрета.
@@ -506,9 +491,10 @@
       </p>
       <div class="track-price">5 000 ₽</div>
       <p class="track-price-sub">за занятие · по записи</p>
-      <p class="track-price-sub" style="margin-top:8px">Вт 17, Чт 19, Вт 24, Чт 26, Вт 31 мартб · 19:00</p>
+      <p class="track-price-sub" style="margin-top:8px">каждый вторник/четверг · 19:00</p>
       <ul class="track-program">
         <li data-n="→">Курс из 4 занятий с Полиной — открываем запись скоро</li>
+        <li data-n="→">Всего 8 мест в группе</li>
       </ul>
       <a href="https://t.me/otrookibot" class="btn-inline">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
@@ -518,18 +504,23 @@
 
     <!-- ЖЕНЯ — справа -->
     <div class="track">
-      <span class="track-tag">Свободное рисование</span>
-      <h3>Женя<br>Бородина</h3>
+      <h3>Свободное<br>рисование</h3>
+      <span class="track-tag">Женя Бардина</span>
+      <span class="track-tag" style="margin-left:6px">Михаил Ганнушкин</span>
       <p class="track-teacher">Разовое занятие · пн и ср</p>
       <p class="track-desc">
-        Поиск индивидуального � стиля рисования, заложенного в вас от природы.
-        Освоение быстрых дехник. Целу: избавление от страха чистого листа, обрести контроля руки и.
+        Поиск индивидуального стиля рисования, заложенного в вас от природы.
+        Освоение быстрых техник. Цель: избавление от страха чистого листа, обрести контроль руки.
         Формат: наброски.
-        Инструменты уголь, маслян ѐ пастель�асляные карандаши.
+        Инструменты: уголь, масляная пастель, масляные карандаши.
       </p>
       <div class="track-price">5 000 ₽</div>
       <p class="track-price-sub">за занятие · по записи</p>
-      <p class="track-price-sub" style="margin-top:8px">Пн 16, Ср 18, Пн 23, Ср 25, Пн 30 марта · 19:00</p>
+      <p class="track-price-sub" style="margin-top:8px">каждый понедельник/среду · 19:00</p>
+      <ul class="track-program">
+        <li data-n="→">Курс из 4 занятий с Женей — открываем запись скоро</li>
+        <li data-n="→">Всего 8 мест в группе</li>
+      </ul>
       <a href="https://t.me/otrookibot" class="btn-inline">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
         Записаться
@@ -553,12 +544,12 @@
       </div>
       <span class="teacher-role">Основы рисования · Вт/Чт</span>
       <h3>Полина Ярцева</h3>
-      <p>Окончила МГХПУ им. Строганова. С 2012 года ведёт уроки рисунка и масляной живописи по авторской методологии — дль взрослых и абитуриентов мировых худвузов. Работы в частных коллекциях, выставки в России и за рубежом.</p>
+      <p>Окончила МГХПУ им. Строганова. С 2012 года ведёт уроки рисунка и масляной живописи по авторской методологии — для взрослых и абитуриентов мировых худвузов. Работы в частных коллекциях, выставки в России и за рубежом.</p>
     </div>
 
     <div class="teacher-card">
       <div class="teacher-photo">
-        <img src="evgenia.jpg" alt="Женя Бардина">
+        <img src="ЖЕНЯ.png" alt="Женя Бардина">
       </div>
       <span class="teacher-role">Свободное рисование · Пн/Ср</span>
       <h3>Женя Бардина</h3>
@@ -578,115 +569,9 @@
 </section>
 
 
-<!-- ── SCHEDULE ── -->
-<section class="schedule" id="schedule">
-  <p class="eyebrow">Расписание</p>
-  <h2>Март 2026</h2>
-
-  <ul class="sched-list">
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">16<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бардина · понедельник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">17<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-     0  <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · вторник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">18<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бардина · среда · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">19<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · четверг · 19:00</div>
-    0 </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">23<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бардина · понедельник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">24<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · вторник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">25<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бардина · среда · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">26<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · четверг · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">30<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-  2     <div class="sched-name">Свободное рисование</div>
-        <div class="sched-teacher">Женя Бардина · понедельник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
-    </li>
-    <li class="sched-item">
-      <div class="sched-day" style="font-size:13px;line-height:1.2">31<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">МАР</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Основы рисования</div>
-        <div class="sched-teacher">Полина Ярцева · вторник · 19:00</div>
-      </div>
-      <div class="sched-price">5 000 ₽ <span>за занятие</span></div>
- 2  </li>
-    <li class="sched-item soon">
-      <div class="sched-day" style="font-size:11px;line-height:1.2">апр<br><span style="font-size:9px;letter-spacing:0.1em;opacity:.6">2026</span></div>
-      <div class="sched-info">
-        <div class="sched-name">Курс «Основы рисования»</div>
-        <div class="sched-teacher">Полина Ярцева · 4 занятия · запись скоро</div>
-      </div>
-      <div class="sched-price">20 000 ₽ <span>курс × 4</span></div>
-    </li>
-  </ul>
-</section>
-
-
-<!-- кнопка после расписания -->
-<div class="sched-cta">
-  <a href="https://t.me/otrookibot" class="btn" style="background:var(--ink);color:var(--bg);">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-    Записаться в Telegram
-  </a>
-</div>
-
 <!-- ── HOW IT WORKS ── -->
 <section class="how" id="how">
-  <p class="eyebrow">Как проходит ызнатие</p>
+  <p class="eyebrow">Как проходит занятие</p>
   <h2>Школа рисования</h2>
 
   <div class="steps">
@@ -708,30 +593,7 @@
     <div class="step">
       <div class="step-n">04</div>
       <div class="step-title">После</div>
-      <div class="step-desc">Бар Ron De Pipa — в двух минутах ходьбы. Дль всех участников скидка 15%. Хорошее место, чтобы продолжить разговор.</div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ── PHOTOS ── -->
-<section class="photos" id="photos">
-  <p class="eyebrow">Как это выглядит</p>
-  <div class="photo-grid">
-    <div class="ph ph-1">
-      <img src="2.jpeg" alt="Мастерская" style="object-position: center 60%;">
-    </div>
-    <div class="ph ph-2">
-      <img src="9.jpeg" alt="Вид из мастерской" style="object-position: center 80%;">
-    </div>
-    <div class="ph ph-3">
-      <img src="3.jpeg" alt="Книги по теории цвета">
-    </div>
-    <div class="ph ph-4">
-      <img src="8.jpeg" alt="Смотрим результаты" style="object-position: center 65%;">
-    </div>
-    <div class="ph ph-5">
-      <img src="1.jpeg" alt="Материалы" style="object-position: center 30%;">
+      <div class="step-desc">Бар Ron De Pipa — в двух минутах ходьбы. Для всех участников скидка 15%. Хорошее место, чтобы продолжить разговор.</div>
     </div>
   </div>
 </section>
@@ -765,7 +627,7 @@
 <!-- ── CTA ── -->
 <section class="cta" id="signup">
   <h2>Хочу рисовать</h2>
-  <p class="cta-sub">Набираем группу — напишите нам в Telegram</p>
+  <p class="cta-sub">Набираем группы — напишите нам в Telegram</p>
   <a href="https://t.me/otrookibot" class="btn">
     <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
       <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
@@ -781,6 +643,7 @@
   <span>Москва · Большой Сергиевский переулок, 11</span>
   <span>@otrookibot</span>
 </footer>
+
 
 </body>
 </html>
