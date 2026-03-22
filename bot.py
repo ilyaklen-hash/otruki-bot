@@ -1,19 +1,11 @@
 #!/usr/bin/env python3
 """
-ОТ РУКИ — Telegram-бот для записи на занятия
-==============================================
-
-Флоу:
-    /start → фото + выбор формата → дата → имя → телефон → подтверждение
-    Кнопка «Қурс» → имя → телефон → лист ожидания
-    Вопросы вне флоу → пересылаются администратору
-    Кнопка «← В начало» / команда /start — перезапуск в любой момент
+ОТ РУКИ — Telegram-бот для записи на занятия (упрощённый)
+Флоу: /start → формат → дата → имя → телефон → ссылка на оплату + адрес
 """
 
-import logging
-import os
-import json
-from datetime import datetime
+import logging, os, json
+from datetime import datetime, timedelta
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
@@ -26,12 +18,12 @@ try:
 except ImportError:
     GSPREAD_AVAILABLE = False
 
-# ═══════════════════════════════════════════════════════════
-#  НАСТРОЙКИ
-# ═══════════════════════════════════════════════════════════
+# ═══════════════ НАСТРОЙКИ ═══════════════
 
 BOT_TOKEN = "8771338517:AAEs0mfa_cPoWKySsFXLkWQb3DNKjO8c4Z0"
 ADMIN_ID  = 163103731  # @klenklen
+
+GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
 
 ADDRESS = (
     "📍 Большой Сергиевский переулок, 11\n"
@@ -39,456 +31,236 @@ ADDRESS = (
     "5 этаж, кв. 12"
 )
 
-PAYMENT_PHONE = "+7 926 115 3033"
-PAYMENT_NAME  = "Михаил Г."
-PAYMENT_BANK  = "Т-Банк"
+PAYMENT = {
+    "tuesday": {
+        "title": "Основы рисования",
+        "url": "https://yookassa.ru/my/i/acBU6AXB58Ba/l",
+        "weekday": 1,  # 0=пн, 1=вт, 2=ср...
+        "label": "вторник",
+    },
+    "wednesday": {
+        "title": "Свободное рисование",
+        "url": "https://yookassa.ru/my/i/acBVMiAtpsMf/l",
+        "weekday": 2,
+        "label": "среда",
+    },
+}
 
-GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID", "")
+WEEKDAY_RU = ["понедельник", "вторник", "среду", "четверг", "пятницу", "субботу", "воскресенье"]
+MONTH_RU = ["", "января", "февраля", "марта", "апреля", "мая", "июня",
+            "июля", "августа", "сентября", "октября", "ноября", "декабря"]
 
-# Путь к приветственному фото (рядом с bot.py)
-WELCOME_PHOTO = os.path.join(os.path.dirname(os.path.abspath(__file__)), "welcome.png")
+def next_dates(weekday: int, count: int = 3) -> list[datetime]:
+    """Ближайшие `count` дат нужного дня недели."""
+    today = datetime.now().date()
+    days_ahead = (weekday - today.weekday()) % 7
+    if days_ahead == 0:
+        days_ahead = 7
+    dates = []
+    d = today + timedelta(days=days_ahead)
+    for _ in range(count):
+        dates.append(d)
+        d += timedelta(weeks=1)
+    return dates
 
-# ═══════════════════════════════════════════════════════════
-#  ЗАНЯТИЯ  ← обновляйте перед каждым новым месяцем
-# ═══════════════════════════════════════════════════════════
+def fmt_date(d) -> str:
+    return f"{d.day} {MONTH_RU[d.month]}, {WEEKDAY_RU[d.weekday()]}"
 
-SESSIONS = [
-    # ── Женя Бардина — понедельник / среда ─────────────────
-    {"id": "e1", "tag": "zhenya", "teacher": "Женя Бардина",
-     "format": "Свободное рисование",
-     "date": "16 марта, понедельник", "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "e2", "tag": "zhenya", "teacher": "Женя Бардина",
-     "format": "Свободное рисование",
-     "date": "18 марта, среда",       "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "e3", "tag": "zhenya", "teacher": "Женя Бардина",
-     "format": "Свободное рисование",
-     "date": "23 марта, понедельник", "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "e4", "tag": "zhenya", "teacher": "Женя Бардина",
-     "format": "Свободное рисование",
-     "date": "25 марта, среда",       "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "e5", "tag": "zhenya", "teacher": "Женя Бардина",
-     "format": "Свободное рисование",
-     "date": "30 марта, понедельник", "time": "19:00", "price": "5 000 ₽", "spots": 8},
+# ═══════════════ КОД БОТА ═══════════════
 
-    # ── Полина Ярцева — вторник / четверг ───────────────────
-    {"id": "p1", "tag": "polina", "teacher": "Полина Ярцева",
-     "format": "Основы рисования",
-     "date": "17 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "p2", "tag": "polina", "teacher": "Полина Ярцева",
-     "format": "Основы рисования",
-     "date": "19 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "p3", "tag": "polina", "teacher": "Полина Ярцева",
-     "format": "Основы рисования",
-     "date": "24 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "p4", "tag": "polina", "teacher": "Полина Ярцева",
-     "format": "Основы рисования",
-     "date": "26 марта, четверг",  "time": "19:00", "price": "5 000 ₽", "spots": 8},
-    {"id": "p5", "tag": "polina", "teacher": "Полина Ярцева",
-     "format": "Основы рисования",
-     "date": "31 марта, вторник",  "time": "19:00", "price": "5 000 ₽", "spots": 8},
-]
-
-# ═══════════════════════════════════════════════════════════
-#  КОД БОТА
-# ═══════════════════════════════════════════════════════════
-
-logging.basicConfig(
-    format="%(asctime)s  %(levelname)-8s  %(message)s",
-    level=logging.INFO,
-)
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s", level=logging.INFO)
 log = logging.getLogger(__name__)
 
-CHOOSE_TEACHER, CHOOSE_SESSION, GET_NAME, GET_PHONE = range(4)
-
-
-# ── Вспомогательные ─────────────────────────────────────────
-
-def _main_keyboard():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🎨 Свободное рисование · пн и ср · 5 000 ₽",
-                              callback_data="teacher:zhenya")],
-        [InlineKeyboardButton("✏️ Основы рисования · вт и чт · 5 000 ₽",
-                              callback_data="teacher:polina")],
-        [InlineKeyboardButton("📚 Курс «Основы» с 17 марта — узнать первым",
-                              callback_data="teacher:waitlist")],
-    ])
-
-def _back_row():
-    """Строка с кнопкой «В начало» — добавляем к любой клавиатуре."""
-    return [InlineKeyboardButton("← В начало", callback_data="back_to_start")]
+CHOOSE_FORMAT, CHOOSE_DATE, GET_NAME, GET_PHONE = range(4)
 
 WELCOME_TEXT = (
     "Привет! Это школа графики *ОТ РУКИ* 🎨\n\n"
-    "Сейчас проводим разовые вечерние занятия — небольшие группы, "
-    "живая атмосфера мастерской. Все материалы включены.\n\n"
-    "Выбери для себя комфортную форму обучения, день и время:"
+    "Небольшие группы, живая атмосфера мастерской. Все материалы включены.\n\n"
+    "Выбери направление:"
 )
 
-
-# ── Google Sheets ────────────────────────────────────────────
-def _append_to_sheet(row: list) -> None:
-    if not GSPREAD_AVAILABLE:
-        log.warning("Google Sheets: gspread не установлен")
-        return
-    if not GOOGLE_SHEET_ID:
-        log.warning("Google Sheets: GOOGLE_SHEET_ID не задан")
-        return
-    creds_json = os.getenv("GOOGLE_CREDENTIALS")
-    if not creds_json:
-        log.warning("Google Sheets: GOOGLE_CREDENTIALS не задан")
-        return
-    try:
-        try:
-            creds_data = json.loads(creds_json)
-        except json.JSONDecodeError:
-            creds_data = json.loads(creds_json.replace('\n', '\\n'))
-        scopes = [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
-        ]
-        gc = gspread.service_account_from_dict(creds_data, scopes=scopes)
-        ws = gc.open_by_key(GOOGLE_SHEET_ID).sheet1
-        if not ws.get_all_values():
-            ws.append_row([
-                "Дата записи", "Имя", "Телефон", "Telegram",
-                "Формат", "Преподаватель", "Дата занятия", "Цена"
-            ])
-        ws.append_row(row)
-        log.info("Google Sheets: запись добавлена")
-    except Exception as e:
-        log.error("Google Sheets: %s", e)
+def _format_keyboard():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("✏️ Вторник · Основы рисования · 5 000 ₽", callback_data="format:tuesday")],
+        [InlineKeyboardButton("🎨 Среда · Свободное рисование · 5 000 ₽",  callback_data="format:wednesday")],
+    ])
 
 
-# ── /start ───────────────────────────────────────────────────
+# ── /start ──────────────────────────────
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Отправляет приветственный текст с кнопками."""
-    kb = _main_keyboard()
-    await update.message.reply_text(
-        WELCOME_TEXT,
-        parse_mode="Markdown",
-        reply_markup=kb,
-    )
-    return CHOOSE_TEACHER
+    await update.message.reply_text(WELCOME_TEXT, parse_mode="Markdown",
+                                    reply_markup=_format_keyboard())
+    return CHOOSE_FORMAT
 
 
-# ── ← В начало (callback) ────────────────────────────────────
-async def back_to_start(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    """Возвращает в главное меню из любого шага."""
-    query = update.callback_query
-    await query.answer()
-    kb = _main_keyboard()
-    # Пробуем обновить подпись фото; если не получится — обновим текст
-    try:
-        await query.edit_message_caption(
-            caption=WELCOME_TEXT,
-            parse_mode="Markdown",
-            reply_markup=kb,
-        )
-    except Exception:
-        try:
-            await query.edit_message_text(
-                text=WELCOME_TEXT,
-                parse_mode="Markdown",
-                reply_markup=kb,
-            )
-        except Exception:
-            # Сообщение не изменилось — отправим новое
-            await query.message.reply_text(
-                WELCOME_TEXT,
-                parse_mode="Markdown",
-                reply_markup=kb,
-            )
-    return CHOOSE_TEACHER
-
-
-# ── Выбор формата ────────────────────────────────────────────
-async def choose_teacher(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    query = update.callback_query
-    await query.answer()
-    tag = query.data.split(":", 1)[1]
-
-    # ── Лист ожидания курса ──────────────────────────────────
-    if tag == "waitlist":
-        ctx.user_data["booking"] = {
-            "type":    "waitlist",
-            "name":    "Курс «Основы рисования»",
-            "teacher": "Полина Ярцева",
-            "date":    "с 17 марта",
-            "price":   "20 000 ₽",
-            "id":      "waitlist",
-        }
-        text = (
-            "*Курс «Основы рисования»* — 4 занятия подряд:\n"
-            "перспектива → форма → свет → портрет.\n\n"
-            "Запись ещё не открылась, но мы напишем тебе первым(ой) 🙌\n\n"
-            "Как тебя зовут?"
-        )
-        kb = InlineKeyboardMarkup([_back_row()])
-        try:
-            await query.edit_message_caption(
-                caption=text, parse_mode="Markdown", reply_markup=kb
-            )
-        except Exception:
-            await query.edit_message_text(
-                text=text, parse_mode="Markdown", reply_markup=kb
-            )
-        return GET_NAME
-
-    # ── Выбор даты ───────────────────────────────────────────
-    available = [s for s in SESSIONS if s["tag"] == tag and s["spots"] > 0]
-
-    if not available:
-        teacher_name = "Женя Бардина" if tag == "zhenya" else "Полина Ярцева"
-        text = (
-            f"К сожалению, свободных мест у {teacher_name} сейчас нет 😔\n\n"
-            "Напиши нам — появятся новые даты: @otrookibot"
-        )
-        kb = InlineKeyboardMarkup([_back_row()])
-        try:
-            await query.edit_message_caption(caption=text, reply_markup=kb)
-        except Exception:
-            await query.edit_message_text(text=text, reply_markup=kb)
-        return ConversationHandler.END
-
-    sample      = available[0]
-    format_name = sample["format"]
-
-    if format_name == "Свободное рисование":
-        desc = (
-            "Вечер без строгой программы — берёшь тему или рисуешь своё, "
-            "преподаватель рядом если нужна помощь.\n"
-            "Уголь, масляная пастель, масляные карандаши. Опыт не нужен.\n"
-            "Ведут: Женя Бардина и Миша Гречко."
-        )
-    else:
-        desc = (
-            "Академический подход: от перспективы до портрета.\n"
-            "Карандаш, масляная и сухая пастель. Опыт не нужен. 16+"
-        )
-
-    keyboard = []
-    for s in available:
-        spots_txt = f"{s['spots']} {_spots_word(s['spots'])}"
-        label = f"{s['date']} · {s['time']} · {spots_txt}"
-        keyboard.append([InlineKeyboardButton(label, callback_data=f"ses:{s['id']}")])
-    keyboard.append(_back_row())
-
-    caption = (
-        f"*{format_name}*\n"
-        f"5 000 ₽ · все материалы включены\n\n"
-        f"{desc}\n\n"
-        "Выбери удобный вечер:"
-    )
-    kb = InlineKeyboardMarkup(keyboard)
-    try:
-        await query.edit_message_caption(
-            caption=caption, parse_mode="Markdown", reply_markup=kb
-        )
-    except Exception:
-        await query.edit_message_text(
-            text=caption, parse_mode="Markdown", reply_markup=kb
-        )
-    return CHOOSE_SESSION
-
-
-# ── Выбор даты ───────────────────────────────────────────────
-async def choose_session(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+# ── Выбор формата → показать даты ──────
+async def choose_format(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
 
-    session_id = query.data.split(":", 1)[1]
-    session = next((s for s in SESSIONS if s["id"] == session_id), None)
+    key = query.data.split(":")[1]
+    fmt = PAYMENT[key]
+    ctx.user_data["format_key"] = key
 
-    if not session or session["spots"] <= 0:
-        text = "Упс, кто-то успел раньше 😅\n\nНажми «← В начало» — покажу другие даты."
-        kb = InlineKeyboardMarkup([_back_row()])
-        try:
-            await query.edit_message_caption(caption=text, reply_markup=kb)
-        except Exception:
-            await query.edit_message_text(text=text, reply_markup=kb)
-        return ConversationHandler.END
+    dates = next_dates(fmt["weekday"], 3)
+    buttons = []
+    for d in dates:
+        label = fmt_date(d)
+        buttons.append([InlineKeyboardButton(label, callback_data=f"date:{d.isoformat()}")])
+    buttons.append([InlineKeyboardButton("← Назад", callback_data="back")])
 
-    ctx.user_data["booking"] = {
-        "type":    "session",
-        "name":    session["format"],
-        "teacher": session["teacher"],
-        "date":    f"{session['date']} · {session['time']}",
-        "price":   session["price"],
-        "id":      session["id"],
-    }
-    text = (
-        f"*{session['date']}* в {session['time']} — отмечено ✦\n\n"
-        "Как тебя зовут?"
-    )
-    kb = InlineKeyboardMarkup([_back_row()])
+    text = f"*{fmt['title']}*\n\nВыбери удобную дату:"
     try:
-        await query.edit_message_caption(
-            caption=text, parse_mode="Markdown", reply_markup=kb
-        )
+        await query.edit_message_text(text, parse_mode="Markdown",
+                                      reply_markup=InlineKeyboardMarkup(buttons))
     except Exception:
-        await query.edit_message_text(
-            text=text, parse_mode="Markdown", reply_markup=kb
-        )
+        await query.message.reply_text(text, parse_mode="Markdown",
+                                       reply_markup=InlineKeyboardMarkup(buttons))
+    return CHOOSE_DATE
+
+
+# ── Выбор даты → имя ───────────────────
+async def choose_date(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+
+    date_str = query.data.split(":")[1]
+    ctx.user_data["date"] = date_str
+    d = datetime.strptime(date_str, "%Y-%m-%d").date()
+    ctx.user_data["date_label"] = fmt_date(d)
+
+    text = f"Отлично, *{fmt_date(d)}* ✦\n\nКак тебя зовут?"
+    try:
+        await query.edit_message_text(text, parse_mode="Markdown",
+                                      reply_markup=InlineKeyboardMarkup([[
+                                          InlineKeyboardButton("← Назад", callback_data="back")]]))
+    except Exception:
+        await query.message.reply_text(text, parse_mode="Markdown")
     return GET_NAME
 
 
-# ── Имя ──────────────────────────────────────────────────────
+# ── Имя → телефон ──────────────────────
 async def get_name(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
     name = update.message.text.strip()
     if len(name) < 2:
         await update.message.reply_text("Напиши своё имя:")
         return GET_NAME
-
     ctx.user_data["name"] = name
-    booking = ctx.user_data.get("booking", {})
-
-    if booking.get("type") == "waitlist":
-        msg = f"{name}, записали!\n\nОставь номер — напишем, как только откроется запись:"
-    else:
-        msg = f"{name}, приятно!\n\nОставь номер телефона — пришлём адрес, детали оплаты и напомним накануне:"
-
     await update.message.reply_text(
-        msg + "\n\n_/start — вернуться в главное меню_",
-        parse_mode="Markdown",
+        f"{name}, приятно! Оставь номер телефона:",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("← В начало", callback_data="back")]])
     )
     return GET_PHONE
 
 
-# ── Телефон → финал ──────────────────────────────────────────
+# ── Телефон → финал ────────────────────
 async def get_phone(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    phone   = update.message.text.strip()
-    name    = ctx.user_data.get("name", "—")
-    booking = ctx.user_data.get("booking", {})
-    user    = update.effective_user
-    tg_ref  = f"@{user.username}" if user.username else f"id{user.id}"
+    phone = update.message.text.strip()
+    name  = ctx.user_data.get("name", "—")
+    key   = ctx.user_data.get("format_key", "tuesday")
+    fmt   = PAYMENT[key]
+    date_label = ctx.user_data.get("date_label", "")
+    user  = update.effective_user
+    tg    = f"@{user.username}" if user.username else f"id{user.id}"
 
-    if booking.get("type") == "waitlist":
-        await update.message.reply_text(
-            "Записали, ты в первом списке 🙌\n\n"
-            "Как только курс будет готов — напишем сразу, с программой и датами.\n\n"
-            "Есть вопросы — пиши прямо сюда 🙂",
-        )
-        admin_msg = (
-            f"📋 *Лист ожидания — Курс с Полиной*\n\n"
-            f"👤 {name}\n"
-            f"📞 {phone}\n"
-            f"🔗 {tg_ref}"
-        )
-    else:
-        # Уменьшаем количество мест
-        for s in SESSIONS:
-            if s["id"] == booking.get("id"):
-                s["spots"] = max(0, s["spots"] - 1)
-                break
-
-        await update.message.reply_text(
-            f"Записались, ждём тебя \u2726\n\n"
-            f"📌 *{booking.get('name')}*\n"
-            f"🗓 {booking.get('date')}\n"
-            f"💳 {booking.get('price')}\n\n"
-            f"💸 *Оплата:* переведи на {PAYMENT_BANK} по номеру "
-            f"`{PAYMENT_PHONE}` ({PAYMENT_NAME})\n\n"
-            f"{ADDRESS}\n\n"
-            "Если что-то поменялось или есть вопросы — просто напиши сюда 🙂",
-            parse_mode="Markdown",
-        )
-        admin_msg = (
-            f"🆕 *Новая запись!*\n\n"
-            f"👤 {name}\n"
-            f"📞 {phone}\n"
-            f"🔗 {tg_ref}\n\n"
-            f"📌 {booking.get('name')} · {booking.get('teacher')}\n"
-            f"🗓 {booking.get('date')}\n"
-            f"💳 {booking.get('price')}"
-        )
+    # Сообщение пользователю
+    await update.message.reply_text(
+        f"Записали, ждём тебя ✦\n\n"
+        f"📌 *{fmt['title']}*\n"
+        f"🗓 {date_label} · 19:00\n\n"
+        f"💳 *Оплата:*\n{fmt['url']}\n\n"
+        f"{ADDRESS}\n\n"
+        "Если что-то изменилось — просто напиши сюда 🙂",
+        parse_mode="Markdown",
+    )
 
     # Уведомление администратору
     try:
-        await ctx.bot.send_message(chat_id=ADMIN_ID, text=admin_msg, parse_mode="Markdown")
+        await ctx.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=f"🆕 *Новая запись!*\n\n👤 {name}\n📞 {phone}\n🔗 {tg}\n\n"
+                 f"📌 {fmt['title']}\n🗓 {date_label}",
+            parse_mode="Markdown",
+        )
     except Exception as e:
         log.warning("Уведомление администратору: %s", e)
 
     # Google Sheets
     _append_to_sheet([
         datetime.now().strftime("%Y-%m-%d %H:%M"),
-        name, phone, tg_ref,
-        booking.get("name", ""),
-        booking.get("teacher", ""),
-        booking.get("date", ""),
-        booking.get("price", ""),
+        name, phone, tg, fmt["title"], date_label,
     ])
 
     return ConversationHandler.END
 
 
-# ── /cancel ──────────────────────────────────────────────────
-async def cancel(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
-    await update.message.reply_text("Окей, без проблем. Передумаешь — /start 🙂")
-    return ConversationHandler.END
-
-
-# ── Вопросы вне флоу ─────────────────────────────────────────
-async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
-    user   = update.effective_user
-    tg_ref = f"@{user.username}" if user.username else f"id{user.id}"
-    text   = update.message.text or "(не текст)"
-
-    await update.message.reply_text(
-        "Увидели, ответим скоро 🙂\n\n"
-        "Хочешь записаться — /start"
-    )
+# ── Назад ──────────────────────────────
+async def back(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
     try:
-        await ctx.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"💬 *Вопрос от {tg_ref}*\n\n{text}",
-            parse_mode="Markdown",
-        )
+        await query.edit_message_text(WELCOME_TEXT, parse_mode="Markdown",
+                                      reply_markup=_format_keyboard())
+    except Exception:
+        await query.message.reply_text(WELCOME_TEXT, parse_mode="Markdown",
+                                       reply_markup=_format_keyboard())
+    return CHOOSE_FORMAT
+
+
+# ── Вопросы вне флоу ───────────────────
+async def forward_question(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    user = update.effective_user
+    tg   = f"@{user.username}" if user.username else f"id{user.id}"
+    await update.message.reply_text("Увидели, ответим скоро 🙂\n\nЗаписаться — /start")
+    try:
+        await ctx.bot.send_message(ADMIN_ID,
+            f"💬 *Вопрос от {tg}*\n\n{update.message.text or '(не текст)'}",
+            parse_mode="Markdown")
     except Exception as e:
         log.warning("Пересылка вопроса: %s", e)
 
 
-# ── Склонение ─────────────────────────────────────────────────
-def _spots_word(n: int) -> str:
-    if n % 10 == 1 and n % 100 != 11:
-        return "место"
-    if n % 10 in (2, 3, 4) and n % 100 not in (12, 13, 14):
-        return "места"
-    return "мест"
+# ── Google Sheets ───────────────────────
+def _append_to_sheet(row: list) -> None:
+    if not GSPREAD_AVAILABLE or not GOOGLE_SHEET_ID:
+        return
+    creds_json = os.getenv("GOOGLE_CREDENTIALS")
+    if not creds_json:
+        return
+    try:
+        try:
+            data = json.loads(creds_json)
+        except json.JSONDecodeError:
+            data = json.loads(creds_json.replace('\n', '\\n'))
+        scopes = ["https://www.googleapis.com/auth/spreadsheets",
+                  "https://www.googleapis.com/auth/drive"]
+        gc = gspread.service_account_from_dict(data, scopes=scopes)
+        ws = gc.open_by_key(GOOGLE_SHEET_ID).sheet1
+        if not ws.get_all_values():
+            ws.append_row(["Дата записи", "Имя", "Телефон", "Telegram", "Формат", "Дата занятия"])
+        ws.append_row(row)
+    except Exception as e:
+        log.error("Google Sheets: %s", e)
 
 
-# ═══════════════════════════════════════════════════════════
-#  ЗАПУСК
-# ═══════════════════════════════════════════════════════════
+# ═══════════════ ЗАПУСК ═══════════════
 
 def main() -> None:
     app = Application.builder().token(BOT_TOKEN).build()
 
-    back_handler = CallbackQueryHandler(back_to_start, pattern=r"^back_to_start$")
-
     conv = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
-            CHOOSE_TEACHER: [
-                CallbackQueryHandler(choose_teacher, pattern=r"^teacher:"),
-                back_handler,
-            ],
-            CHOOSE_SESSION: [
-                CallbackQueryHandler(choose_session, pattern=r"^ses:"),
-                back_handler,
-            ],
-            GET_NAME: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
-                back_handler,
-            ],
-            GET_PHONE: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone),
-                back_handler,
-            ],
+            CHOOSE_FORMAT: [CallbackQueryHandler(choose_format, pattern=r"^format:"),
+                            CallbackQueryHandler(back, pattern=r"^back$")],
+            CHOOSE_DATE:   [CallbackQueryHandler(choose_date, pattern=r"^date:"),
+                            CallbackQueryHandler(back, pattern=r"^back$")],
+            GET_NAME:      [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name),
+                            CallbackQueryHandler(back, pattern=r"^back$")],
+            GET_PHONE:     [MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone),
+                            CallbackQueryHandler(back, pattern=r"^back$")],
         },
-        fallbacks=[
-            CommandHandler("cancel", cancel),
-            CommandHandler("start", start),   # /start перезапускает в любой момент
-        ],
+        fallbacks=[CommandHandler("start", start)],
     )
 
     app.add_handler(conv)
